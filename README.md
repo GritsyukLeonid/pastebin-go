@@ -43,5 +43,5 @@
 1. Клонируйте репозиторий:
 
    ```bash
-   git clone https://github.com/yourusername/pastebin-go.git
+   git clone https://github.com/lgritsyuk/pastebin-go.git
    cd pastebin-go
