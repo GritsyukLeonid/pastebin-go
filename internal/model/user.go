@@ -31,3 +31,7 @@ func (u *User) AddPost(hash string) {
 func (u *User) Posts() []string {
 	return u.posts
 }
+
+func (u *User) GetTypeName() string {
+	return "User"
+}

@@ -21,3 +21,7 @@ func (s *Stats) Views() int {
 func (s *Stats) Hash() string {
 	return s.pasteHash
 }
+
+func (s *Stats) GetTypeName() string {
+	return "Stats"
+}

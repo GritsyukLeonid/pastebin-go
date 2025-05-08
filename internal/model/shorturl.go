@@ -20,3 +20,7 @@ func (s *ShortURL) SetHash(h string) {
 func (s *ShortURL) Hash() string {
 	return s.hash
 }
+
+func (s *ShortURL) GetTypeName() string {
+	return "ShortURL"
+}

@@ -75,3 +75,7 @@ func (p *Paste) AttachStats(s *Stats) {
 func (p *Paste) Stats() *Stats {
 	return p.metrics
 }
+
+func (p *Paste) GetTypeName() string {
+	return "Paste"
+}
