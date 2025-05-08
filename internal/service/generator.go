@@ -17,7 +17,7 @@ func GenerateAndStoreObjects() {
 		p := model.NewPaste("example", time.Minute)
 		u := model.NewUser("Leonid")
 		s := model.NewStats("xyz123")
-		url := model.New("https://example.com")
+		url := model.NewShortURL("https://example.com")
 
 		repository.Store(p)
 		repository.Store(u)
