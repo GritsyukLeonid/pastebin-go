@@ -12,6 +12,12 @@ func NewStats(hash string) *Stats {
 	}
 }
 
-func (s *Stats) IncrementViews() { s.views++ }
-func (s *Stats) Views() int      { return s.views }
-func (s *Stats) Hash() string    { return s.pasteHash }
+func (s *Stats) IncrementViews() {
+	s.views++
+}
+func (s *Stats) Views() int {
+	return s.views
+}
+func (s *Stats) Hash() string {
+	return s.pasteHash
+}
