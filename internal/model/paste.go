@@ -1,7 +1,6 @@
-package paste
+package model
 
 import (
-	"pastebin-go/internal/model/stats"
 	"time"
 )
 
@@ -12,7 +11,7 @@ type Paste struct {
 	createdAt time.Time
 	expiresAt time.Time
 	views     int
-	metrics   *stats.Stats
+	metrics   *Stats
 }
 
 func NewPaste(content string, ttl time.Duration) *Paste {
@@ -25,7 +24,7 @@ func NewPaste(content string, ttl time.Duration) *Paste {
 	}
 }
 
-func (p *Paste) GetID() int64 {
+func (p *Paste) ID() int64 {
 	return p.id
 }
 
@@ -33,7 +32,7 @@ func (p *Paste) SetID(id int64) {
 	p.id = id
 }
 
-func (p *Paste) GetHash() string {
+func (p *Paste) Hash() string {
 	return p.hash
 }
 
@@ -41,7 +40,7 @@ func (p *Paste) SetHash(h string) {
 	p.hash = h
 }
 
-func (p *Paste) GetContent() string {
+func (p *Paste) Content() string {
 	return p.content
 }
 
@@ -49,11 +48,11 @@ func (p *Paste) SetContent(content string) {
 	p.content = content
 }
 
-func (p *Paste) GetCreatedAt() time.Time {
+func (p *Paste) CreatedAt() time.Time {
 	return p.createdAt
 }
 
-func (p *Paste) GetExpiresAt() time.Time {
+func (p *Paste) ExpiresAt() time.Time {
 	return p.expiresAt
 }
 
@@ -65,14 +64,14 @@ func (p *Paste) IncrementViews() {
 	p.views++
 }
 
-func (p *Paste) GetViews() int {
+func (p *Paste) Views() int {
 	return p.views
 }
 
-func (p *Paste) AttachStats(s *stats.Stats) {
+func (p *Paste) AttachStats(s *Stats) {
 	p.metrics = s
 }
 
-func (p *Paste) GetStats() *stats.Stats {
+func (p *Paste) Stats() *Stats {
 	return p.metrics
 }

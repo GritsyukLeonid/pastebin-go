@@ -1,4 +1,4 @@
-package user
+package model
 
 type User struct {
 	id       int64
@@ -12,7 +12,7 @@ func NewUser(username string) *User {
 	}
 }
 
-func (u *User) GetID() int64 {
+func (u *User) ID() int64 {
 	return u.id
 }
 
@@ -20,7 +20,7 @@ func (u *User) SetID(id int64) {
 	u.id = id
 }
 
-func (u *User) GetUsername() string {
+func (u *User) Username() string {
 	return u.username
 }
 
@@ -28,6 +28,6 @@ func (u *User) AddPost(hash string) {
 	u.posts = append(u.posts, hash)
 }
 
-func (u *User) GetPosts() []string {
+func (u *User) Posts() []string {
 	return u.posts
 }
