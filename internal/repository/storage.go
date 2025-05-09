@@ -1,11 +1,11 @@
 package repository
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"sync"
-	"time"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
 )
@@ -29,70 +29,46 @@ var (
 	}
 )
 
-func StoreFromChannel(ctx context.Context, ch <-chan model.Storable) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case obj, ok := <-ch:
-			if !ok {
-				return
-			}
-			switch v := obj.(type) {
-			case *model.Paste:
-				pasteMutex.Lock()
-				Pastes = append(Pastes, v)
-				pasteMutex.Unlock()
-			case *model.User:
-				userMutex.Lock()
-				Users = append(Users, v)
-				userMutex.Unlock()
-			case *model.Stats:
-				statsMutex.Lock()
-				StatsSet = append(StatsSet, v)
-				statsMutex.Unlock()
-			case *model.ShortURL:
-				urlMutex.Lock()
-				URLs = append(URLs, v)
-				urlMutex.Unlock()
-			default:
-				log.Println("Unknown type:", v.GetTypeName())
-			}
-		}
+func StoreObject(obj model.Storable) {
+	switch v := obj.(type) {
+	case *model.Paste:
+		pasteMutex.Lock()
+		defer pasteMutex.Unlock()
+		Pastes = append(Pastes, v)
+		saveJSON("pastes.json", Pastes)
+	case *model.User:
+		userMutex.Lock()
+		defer userMutex.Unlock()
+		Users = append(Users, v)
+		saveJSON("users.json", Users)
+	case *model.Stats:
+		statsMutex.Lock()
+		defer statsMutex.Unlock()
+		StatsSet = append(StatsSet, v)
+		saveJSON("stats.json", StatsSet)
+	case *model.ShortURL:
+		urlMutex.Lock()
+		defer urlMutex.Unlock()
+		URLs = append(URLs, v)
+		saveJSON("urls.json", URLs)
+	default:
+		log.Println("Unknown type:", v.GetTypeName())
 	}
 }
 
-func LogChanges(ctx context.Context) {
-	ticker := time.NewTicker(200 * time.Millisecond)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			logNew("Paste", &pasteMutex, func() int {
-				return len(Pastes)
-			}, func(i int) string {
-				return fmt.Sprintf("Paste: %+v", Pastes[i])
-			})
-			logNew("User", &userMutex, func() int {
-				return len(Users)
-			}, func(i int) string {
-				return fmt.Sprintf("User: %+v", Users[i])
-			})
-			logNew("Stats", &statsMutex, func() int {
-				return len(StatsSet)
-			}, func(i int) string {
-				return fmt.Sprintf("Stats: %+v", StatsSet[i])
-			})
-			logNew("ShortURL", &urlMutex, func() int {
-				return len(URLs)
-			}, func(i int) string {
-				return fmt.Sprintf("ShortURL: %+v", URLs[i])
-			})
-		}
-	}
+func CheckAndLogChanges() {
+	logNew("Paste", &pasteMutex, func() int { return len(Pastes) }, func(i int) string {
+		return fmt.Sprintf("Paste: %+v", Pastes[i])
+	})
+	logNew("User", &userMutex, func() int { return len(Users) }, func(i int) string {
+		return fmt.Sprintf("User: %+v", Users[i])
+	})
+	logNew("Stats", &statsMutex, func() int { return len(StatsSet) }, func(i int) string {
+		return fmt.Sprintf("Stats: %+v", StatsSet[i])
+	})
+	logNew("ShortURL", &urlMutex, func() int { return len(URLs) }, func(i int) string {
+		return fmt.Sprintf("ShortURL: %+v", URLs[i])
+	})
 }
 
 func logNew(key string, mu *sync.Mutex, countFn func() int, formatFn func(i int) string) {
@@ -105,5 +81,48 @@ func logNew(key string, mu *sync.Mutex, countFn func() int, formatFn func(i int)
 			log.Println(formatFn(i))
 		}
 		prevCounts[key] = current
+	}
+}
+
+func saveJSON(filename string, data any) {
+	file, err := os.Create(filename)
+	if err != nil {
+		log.Println("Error creating file:", filename, err)
+		return
+	}
+	defer file.Close()
+
+	enc := json.NewEncoder(file)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(data); err != nil {
+		log.Println("Error encoding data to", filename, err)
+	}
+}
+
+func LoadData() {
+	loadJSON("pastes.json", &Pastes)
+	loadJSON("users.json", &Users)
+	loadJSON("stats.json", &StatsSet)
+	loadJSON("urls.json", &URLs)
+
+	prevCounts["Paste"] = len(Pastes)
+	prevCounts["User"] = len(Users)
+	prevCounts["Stats"] = len(StatsSet)
+	prevCounts["ShortURL"] = len(URLs)
+}
+
+func loadJSON(filename string, target any) {
+	file, err := os.Open(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return
+		}
+		log.Println("Error opening file:", filename, err)
+		return
+	}
+	defer file.Close()
+
+	if err := json.NewDecoder(file).Decode(target); err != nil {
+		log.Println("Error decoding", filename, err)
 	}
 }

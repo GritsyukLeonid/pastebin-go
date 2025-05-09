@@ -12,6 +12,8 @@ import (
 )
 
 func main() {
+	repository.LoadData()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -21,8 +23,8 @@ func main() {
 	ch := make(chan model.Storable)
 
 	go service.GenerateAndSendObjects(ctx, ch)
-	go repository.StoreFromChannel(ctx, ch)
-	go repository.LogChanges(ctx)
+	go service.StoreFromChannel(ctx, ch)
+	go service.LogChanges(ctx)
 
 	<-stop
 	cancel()
