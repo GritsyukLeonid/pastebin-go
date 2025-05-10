@@ -1,35 +1,23 @@
 package model
 
 type User struct {
-	id       int64
-	username string
-	posts    []string
+	ID       int64    `json:"id"`
+	Username string   `json:"username"`
+	Posts    []string `json:"posts"`
 }
 
 func NewUser(username string) *User {
 	return &User{
-		username: username,
+		Username: username,
 	}
 }
 
-func (u *User) ID() int64 {
-	return u.id
-}
-
 func (u *User) SetID(id int64) {
-	u.id = id
-}
-
-func (u *User) Username() string {
-	return u.username
+	u.ID = id
 }
 
 func (u *User) AddPost(hash string) {
-	u.posts = append(u.posts, hash)
-}
-
-func (u *User) Posts() []string {
-	return u.posts
+	u.Posts = append(u.Posts, hash)
 }
 
 func (u *User) GetTypeName() string {
