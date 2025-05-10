@@ -5,75 +5,51 @@ import (
 )
 
 type Paste struct {
-	id        int64
-	hash      string
-	content   string
-	createdAt time.Time
-	expiresAt time.Time
-	views     int
-	metrics   *Stats
+	ID        int64     `json:"id"`
+	Hash      string    `json:"hash"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"createdAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
+	Views     int       `json:"views"`
+	Metrics   *Stats    `json:"metrics"`
 }
 
 func NewPaste(content string, ttl time.Duration) *Paste {
 	now := time.Now()
 	return &Paste{
-		content:   content,
-		createdAt: now,
-		expiresAt: now.Add(ttl),
-		views:     0,
+		Content:   content,
+		CreatedAt: now,
+		ExpiresAt: now.Add(ttl),
+		Views:     0,
 	}
 }
 
-func (p *Paste) ID() int64 {
-	return p.id
-}
-
 func (p *Paste) SetID(id int64) {
-	p.id = id
-}
-
-func (p *Paste) Hash() string {
-	return p.hash
+	p.ID = id
 }
 
 func (p *Paste) SetHash(h string) {
-	p.hash = h
-}
-
-func (p *Paste) Content() string {
-	return p.content
+	p.Hash = h
 }
 
 func (p *Paste) SetContent(content string) {
-	p.content = content
-}
-
-func (p *Paste) CreatedAt() time.Time {
-	return p.createdAt
-}
-
-func (p *Paste) ExpiresAt() time.Time {
-	return p.expiresAt
+	p.Content = content
 }
 
 func (p *Paste) SetExpiresAt(t time.Time) {
-	p.expiresAt = t
+	p.ExpiresAt = t
 }
 
 func (p *Paste) IncrementViews() {
-	p.views++
-}
-
-func (p *Paste) Views() int {
-	return p.views
+	p.Views++
 }
 
 func (p *Paste) AttachStats(s *Stats) {
-	p.metrics = s
+	p.Metrics = s
 }
 
 func (p *Paste) Stats() *Stats {
-	return p.metrics
+	return p.Metrics
 }
 
 func (p *Paste) GetTypeName() string {
