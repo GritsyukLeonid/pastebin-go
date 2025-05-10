@@ -9,6 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/GritsyukLeonid/pastebin-go/docs" // подключаем сгенерированные swagger-доки
+	httpSwagger "github.com/swaggo/http-swagger"
+
 	"github.com/GritsyukLeonid/pastebin-go/internal/httpserver"
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
 	"github.com/GritsyukLeonid/pastebin-go/internal/repository"
@@ -30,10 +33,15 @@ func main() {
 	go service.StoreFromChannel(ctx, ch)
 	go service.LogChanges(ctx)
 
-	// Запуск HTTP-сервера
+	// Регистрируем обычные ручки
+	httpserver.RegisterHandlers()
+
+	// Подключаем Swagger без изменений в httpserver
+	http.Handle("/swagger/", httpSwagger.WrapHandler)
+
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: httpserver.NewRouter(),
+		Handler: nil, // ← используем DefaultServeMux, где всё уже зарегистрировано
 	}
 
 	go func() {
