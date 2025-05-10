@@ -3,7 +3,6 @@ package repository
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 
@@ -29,74 +28,85 @@ var (
 	}
 )
 
-func StoreObject(obj model.Storable) {
+func StoreObject(obj model.Storable) error {
 	switch v := obj.(type) {
 	case *model.Paste:
 		pasteMutex.Lock()
 		defer pasteMutex.Unlock()
 		Pastes = append(Pastes, v)
-		saveJSON("pastes.json", Pastes)
+		return saveJSON("pastes.json", Pastes)
 	case *model.User:
 		userMutex.Lock()
 		defer userMutex.Unlock()
 		Users = append(Users, v)
-		saveJSON("users.json", Users)
+		return saveJSON("users.json", Users)
 	case *model.Stats:
 		statsMutex.Lock()
 		defer statsMutex.Unlock()
 		StatsSet = append(StatsSet, v)
-		saveJSON("stats.json", StatsSet)
+		return saveJSON("stats.json", StatsSet)
 	case *model.ShortURL:
 		urlMutex.Lock()
 		defer urlMutex.Unlock()
 		URLs = append(URLs, v)
-		saveJSON("urls.json", URLs)
+		return saveJSON("urls.json", URLs)
 	default:
-		log.Println("Unknown type:", v.GetTypeName())
+		return fmt.Errorf("unknown type: %s", v.GetTypeName())
 	}
 }
 
-func CheckAndLogChanges() {
-	logNew("Paste", &pasteMutex, func() int { return len(Pastes) }, func(i int) string {
-		return fmt.Sprintf("Paste: %+v", Pastes[i])
-	})
-	logNew("User", &userMutex, func() int { return len(Users) }, func(i int) string {
-		return fmt.Sprintf("User: %+v", Users[i])
-	})
-	logNew("Stats", &statsMutex, func() int { return len(StatsSet) }, func(i int) string {
-		return fmt.Sprintf("Stats: %+v", StatsSet[i])
-	})
-	logNew("ShortURL", &urlMutex, func() int { return len(URLs) }, func(i int) string {
-		return fmt.Sprintf("ShortURL: %+v", URLs[i])
-	})
-}
+func DetectNewObjects() map[string][]string {
+	result := make(map[string][]string)
 
-func logNew(key string, mu *sync.Mutex, countFn func() int, formatFn func(i int) string) {
-	mu.Lock()
-	defer mu.Unlock()
-	current := countFn()
-	prev := prevCounts[key]
-	if current > prev {
-		for i := prev; i < current; i++ {
-			log.Println(formatFn(i))
+	pasteMutex.Lock()
+	if len(Pastes) > prevCounts["Paste"] {
+		for i := prevCounts["Paste"]; i < len(Pastes); i++ {
+			result["Paste"] = append(result["Paste"], fmt.Sprintf("%+v", Pastes[i]))
 		}
-		prevCounts[key] = current
+		prevCounts["Paste"] = len(Pastes)
 	}
+	pasteMutex.Unlock()
+
+	userMutex.Lock()
+	if len(Users) > prevCounts["User"] {
+		for i := prevCounts["User"]; i < len(Users); i++ {
+			result["User"] = append(result["User"], fmt.Sprintf("%+v", Users[i]))
+		}
+		prevCounts["User"] = len(Users)
+	}
+	userMutex.Unlock()
+
+	statsMutex.Lock()
+	if len(StatsSet) > prevCounts["Stats"] {
+		for i := prevCounts["Stats"]; i < len(StatsSet); i++ {
+			result["Stats"] = append(result["Stats"], fmt.Sprintf("%+v", StatsSet[i]))
+		}
+		prevCounts["Stats"] = len(StatsSet)
+	}
+	statsMutex.Unlock()
+
+	urlMutex.Lock()
+	if len(URLs) > prevCounts["ShortURL"] {
+		for i := prevCounts["ShortURL"]; i < len(URLs); i++ {
+			result["ShortURL"] = append(result["ShortURL"], fmt.Sprintf("%+v", URLs[i]))
+		}
+		prevCounts["ShortURL"] = len(URLs)
+	}
+	urlMutex.Unlock()
+
+	return result
 }
 
-func saveJSON(filename string, data any) {
+func saveJSON(filename string, data any) error {
 	file, err := os.Create(filename)
 	if err != nil {
-		log.Println("Error creating file:", filename, err)
-		return
+		return err
 	}
 	defer file.Close()
 
 	enc := json.NewEncoder(file)
 	enc.SetIndent("", "  ")
-	if err := enc.Encode(data); err != nil {
-		log.Println("Error encoding data to", filename, err)
-	}
+	return enc.Encode(data)
 }
 
 func LoadData() {
@@ -117,12 +127,9 @@ func loadJSON(filename string, target any) {
 		if os.IsNotExist(err) {
 			return
 		}
-		log.Println("Error opening file:", filename, err)
 		return
 	}
 	defer file.Close()
 
-	if err := json.NewDecoder(file).Decode(target); err != nil {
-		log.Println("Error decoding", filename, err)
-	}
+	_ = json.NewDecoder(file).Decode(target)
 }

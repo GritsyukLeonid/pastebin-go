@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
@@ -17,7 +18,9 @@ func StoreFromChannel(ctx context.Context, ch <-chan model.Storable) {
 			if !ok {
 				return
 			}
-			repository.StoreObject(obj)
+			if err := repository.StoreObject(obj); err != nil {
+				log.Println("Error storing object:", err)
+			}
 		}
 	}
 }
@@ -31,7 +34,12 @@ func LogChanges(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			repository.CheckAndLogChanges()
+			newObjects := repository.DetectNewObjects()
+			for typ, entries := range newObjects {
+				for _, entry := range entries {
+					log.Printf("%s: %s\n", typ, entry)
+				}
+			}
 		}
 	}
 }
