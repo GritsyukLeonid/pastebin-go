@@ -1,25 +1,19 @@
 package model
 
 type Stats struct {
-	pasteHash string
-	views     int
+	PasteHash string `json:"paste_hash"`
+	Views     int    `json:"views"`
 }
 
 func NewStats(hash string) *Stats {
 	return &Stats{
-		pasteHash: hash,
-		views:     0,
+		PasteHash: hash,
+		Views:     0,
 	}
 }
 
 func (s *Stats) IncrementViews() {
-	s.views++
-}
-func (s *Stats) Views() int {
-	return s.views
-}
-func (s *Stats) Hash() string {
-	return s.pasteHash
+	s.Views++
 }
 
 func (s *Stats) GetTypeName() string {

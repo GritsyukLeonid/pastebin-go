@@ -1,0 +1,481 @@
+definitions:
+  model.Paste:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      expiresAt:
+        type: string
+      hash:
+        type: string
+      id:
+        type: integer
+      metrics:
+        $ref: '#/definitions/model.Stats'
+      views:
+        type: integer
+    type: object
+  model.ShortURL:
+    properties:
+      original:
+        type: string
+    type: object
+  model.Stats:
+    properties:
+      paste_hash:
+        type: string
+      views:
+        type: integer
+    type: object
+  model.User:
+    properties:
+      id:
+        type: integer
+      posts:
+        items:
+          type: string
+        type: array
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/paste:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Paste'
+            type: array
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Paste'
+      summary: Get all pastes or create a new paste
+      tags:
+      - Paste
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Paste'
+            type: array
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Paste'
+      summary: Get all pastes or create a new paste
+      tags:
+      - Paste
+  /api/paste/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Paste ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Paste'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a paste by ID
+      tags:
+      - Paste
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Paste ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Paste'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a paste by ID
+      tags:
+      - Paste
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Paste ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Paste'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a paste by ID
+      tags:
+      - Paste
+  /api/stats:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Stats'
+            type: array
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Stats'
+      summary: Get all stats or create a new stat
+      tags:
+      - Stats
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Stats'
+            type: array
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Stats'
+      summary: Get all stats or create a new stat
+      tags:
+      - Stats
+  /api/stats/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Stat ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Stats'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a stat by ID
+      tags:
+      - Stats
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Stat ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Stats'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a stat by ID
+      tags:
+      - Stats
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Stat ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Stats'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a stat by ID
+      tags:
+      - Stats
+  /api/url:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ShortURL'
+            type: array
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.ShortURL'
+      summary: Get all short URLs or create a new short URL
+      tags:
+      - ShortURL
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ShortURL'
+            type: array
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.ShortURL'
+      summary: Get all short URLs or create a new short URL
+      tags:
+      - ShortURL
+  /api/url/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Short URL ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ShortURL'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a short URL by ID
+      tags:
+      - ShortURL
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Short URL ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ShortURL'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a short URL by ID
+      tags:
+      - ShortURL
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Short URL ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ShortURL'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a short URL by ID
+      tags:
+      - ShortURL
+  /api/user:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.User'
+            type: array
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.User'
+      summary: Get all users or create a new user
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.User'
+            type: array
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.User'
+      summary: Get all users or create a new user
+      tags:
+      - User
+  /api/user/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a user by ID
+      tags:
+      - User
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a user by ID
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Get, update or delete a user by ID
+      tags:
+      - User
+swagger: "2.0"
