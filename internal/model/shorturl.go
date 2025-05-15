@@ -1,24 +1,16 @@
 package model
 
 type ShortURL struct {
-	original string
-	hash     string
+	Original string `json:"original"`
+	ID       string `json:"id"`
 }
 
-func NewShortURL(original string) *ShortURL {
-	return &ShortURL{original: original}
+func NewShortURL(original string, hash string) *ShortURL {
+	return &ShortURL{Original: original, ID: hash}
 }
 
-func (s *ShortURL) Original() string {
-	return s.original
-}
-
-func (s *ShortURL) SetHash(h string) {
-	s.hash = h
-}
-
-func (s *ShortURL) Hash() string {
-	return s.hash
+func (s *ShortURL) GetHash() string {
+	return s.ID
 }
 
 func (s *ShortURL) GetTypeName() string {
