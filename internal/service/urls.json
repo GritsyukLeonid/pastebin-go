@@ -1,0 +1,18 @@
+[
+  {
+    "original": "https://example.com",
+    "id": "short1"
+  },
+  {
+    "original": "",
+    "id": "short2"
+  },
+  {
+    "original": "https://example.com",
+    "id": "short1"
+  },
+  {
+    "original": "",
+    "id": "short2"
+  }
+]
