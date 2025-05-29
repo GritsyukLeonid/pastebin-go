@@ -14,16 +14,19 @@ func StoreFromChannel(ctx context.Context, ch <-chan model.Storable) {
 		select {
 		case <-ctx.Done():
 			return
-		case obj := <-ch:
+		case obj, ok := <-ch:
+			if !ok {
+				return
+			}
 			if err := repository.StoreObject(obj); err != nil {
-				log.Printf("failed to store object: %v", err)
+				log.Println("Error storing object:", err)
 			}
 		}
 	}
 }
 
 func LogChanges(ctx context.Context) {
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(200 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
@@ -32,9 +35,9 @@ func LogChanges(ctx context.Context) {
 			return
 		case <-ticker.C:
 			newObjects := repository.DetectNewObjects()
-			for k, v := range newObjects {
-				for _, obj := range v {
-					log.Printf("[New %s] %s", k, obj)
+			for typ, entries := range newObjects {
+				for _, entry := range entries {
+					log.Printf("%s: %s\n", typ, entry)
 				}
 			}
 		}
