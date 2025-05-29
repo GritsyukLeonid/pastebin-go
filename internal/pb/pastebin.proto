@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package pastebin;
+
+option go_package = "github.com/GritsyukLeonid/pastebin-go/internal/pb";
+;
+
+message Paste {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+  int64 user_id = 4;
+  string created_at = 5;
+}
+
+message User {
+  int64 id = 1;
+  string username = 2;
+  string email = 3;
+  string password = 4;
+}
+
+message Stats {
+  string id = 1;
+  string paste_id = 2;
+  int64 views = 3;
+}
+
+message ShortURL {
+  string id = 1;
+  string original_url = 2;
+  string short_code = 3;
+}
+
+message IDRequest {
+  string id = 1;
+}
+
+message IDRequestInt {
+  int64 id = 1;
+}
+
+message Empty {}
+
+message Status {
+  string message = 1;
+}
+
+service PasteService {
+  rpc CreatePaste(Paste) returns (Paste);
+  rpc GetPaste(IDRequest) returns (Paste);
+  rpc ListPastes(Empty) returns (stream Paste);
+  rpc UpdatePaste(Paste) returns (Paste);
+  rpc DeletePaste(IDRequest) returns (Status);
+}
+
+service UserService {
+  rpc CreateUser(User) returns (User);
+  rpc GetUser(IDRequestInt) returns (User);
+  rpc ListUsers(Empty) returns (stream User);
+  rpc UpdateUser(User) returns (User);
+  rpc DeleteUser(IDRequestInt) returns (Status);
+}
+
+service StatsService {
+  rpc CreateStats(Stats) returns (Stats);
+  rpc GetStats(IDRequest) returns (Stats);
+  rpc ListStats(Empty) returns (stream Stats);
+  rpc UpdateStats(Stats) returns (Status);
+  rpc DeleteStats(IDRequest) returns (Status);
+}
+
+service ShortURLService {
+  rpc CreateShortURL(ShortURL) returns (ShortURL);
+  rpc GetShortURL(IDRequest) returns (ShortURL);
+  rpc ListShortURLs(Empty) returns (stream ShortURL);
+  rpc UpdateShortURL(ShortURL) returns (Status);
+  rpc DeleteShortURL(IDRequest) returns (Status);
+}
