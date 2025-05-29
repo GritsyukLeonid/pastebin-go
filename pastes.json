@@ -1,0 +1,20 @@
+[
+  {
+    "id": "794f130e-6f71-4485-b68a-31964475549c",
+    "hash": "",
+    "content": "Hello world!",
+    "createdAt": "2025-05-25T21:58:00.589468037+03:00",
+    "expiresAt": "0001-01-01T00:00:00Z",
+    "views": 0,
+    "metrics": null
+  },
+  {
+    "id": "b76145ab-0cda-4be7-8308-8c25ba7acf3f",
+    "hash": "",
+    "content": "Gritsyuk test",
+    "createdAt": "2025-05-25T22:12:30.271316089+03:00",
+    "expiresAt": "0001-01-01T00:00:00Z",
+    "views": 0,
+    "metrics": null
+  }
+]
