@@ -7,12 +7,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	_ "github.com/GritsyukLeonid/pastebin-go/internal/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/handlers"
-	"github.com/GritsyukLeonid/pastebin-go/internal/model"
+	"github.com/GritsyukLeonid/pastebin-go/internal/logging"
 	"github.com/GritsyukLeonid/pastebin-go/internal/repository"
 	"github.com/GritsyukLeonid/pastebin-go/internal/service"
 	"github.com/gorilla/mux"
@@ -25,46 +26,53 @@ import (
 // @BasePath /api
 
 func main() {
-	repository.LoadData()
+	mongoURI := os.Getenv("MONGO_URI")
+	if mongoURI == "" {
+		mongoURI = "mongodb://localhost:27017"
+	}
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	mongoStorage, err := repository.NewMongoStorage(mongoURI, "pastebin")
+	if err != nil {
+		log.Fatalf("Ошибка подключения к MongoDB: %v", err)
+	}
+	redisLogger := logging.NewRedisLogger(redisAddr, 10*time.Minute)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	// Прокидываем зависимости в хендлеры
+	handlers.SetServices(
+		service.NewPasteService(mongoStorage, redisLogger),
+		service.NewUserService(mongoStorage, redisLogger),
+		service.NewStatsService(mongoStorage, redisLogger),
+		service.NewShortURLService(mongoStorage, redisLogger),
+	)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	ch := make(chan model.Storable)
-
-	go service.StoreFromChannel(ctx, ch)
-	go service.LogChanges(ctx)
-
 	router := mux.NewRouter()
-
 	api := router.PathPrefix("/api").Subrouter()
 
 	// Paste endpoints
 	api.HandleFunc("/paste", handlers.CreatePasteHandler).Methods(http.MethodPost)
-	api.HandleFunc("/paste/{id}", handlers.UpdatePasteHandler).Methods(http.MethodPut)
 	api.HandleFunc("/paste/{id}", handlers.DeletePasteHandler).Methods(http.MethodDelete)
 
 	// User endpoints
 	api.HandleFunc("/user", handlers.GetUsersHandler).Methods(http.MethodGet)
 	api.HandleFunc("/user/{id}", handlers.GetUserByIDHandler).Methods(http.MethodGet)
 	api.HandleFunc("/user", handlers.CreateUserHandler).Methods(http.MethodPost)
-	api.HandleFunc("/user/{id}", handlers.UpdateUserHandler).Methods(http.MethodPut)
 	api.HandleFunc("/user/{id}", handlers.DeleteUserHandler).Methods(http.MethodDelete)
 
 	// Stats endpoints
 	api.HandleFunc("/stats", handlers.GetAllStatsHandler).Methods(http.MethodGet)
 	api.HandleFunc("/stat/{id}", handlers.GetStatsByIDHandler).Methods(http.MethodGet)
 	api.HandleFunc("/stats", handlers.CreateStatsHandler).Methods(http.MethodPost)
-	api.HandleFunc("/stat/{id}", handlers.UpdateStatsHandler).Methods(http.MethodPut)
 	api.HandleFunc("/stat/{id}", handlers.DeleteStatsHandler).Methods(http.MethodDelete)
 
 	// Short URL endpoints
 	api.HandleFunc("/shorturls", handlers.GetAllShortURLsHandler).Methods(http.MethodGet)
 	api.HandleFunc("/shorturl/{id}", handlers.GetShortURLByIDHandler).Methods(http.MethodGet)
-	api.HandleFunc("/shorturl/{id}", handlers.UpdateShortURLHandler).Methods(http.MethodPut)
 	api.HandleFunc("/shorturl/{id}", handlers.DeleteShortURLHandler).Methods(http.MethodDelete)
 
 	// Swagger
@@ -84,10 +92,9 @@ func main() {
 	}()
 
 	<-stop
-	cancel()
-	close(ch)
+	log.Println("Shutting down server...")
 
 	if err := server.Shutdown(context.Background()); err != nil {
-		panic(err)
+		log.Fatalf("Server shutdown error: %v", err)
 	}
 }
