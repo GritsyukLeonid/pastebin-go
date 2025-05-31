@@ -19,16 +19,17 @@ type UserService interface {
 	DeleteUser(ctx context.Context, id string) error
 	ListUsers(ctx context.Context) ([]model.User, error)
 }
+
 type ShortURLService interface {
-	CreateShortURL(ctx context.Context, su model.ShortURL) (model.ShortURL, error)
-	GetShortURL(ctx context.Context, id string) (model.ShortURL, error)
+	CreateShortURL(ctx context.Context, u model.ShortURL) (model.ShortURL, error)
+	GetShortURLByID(ctx context.Context, id string) (model.ShortURL, error)
 	DeleteShortURL(ctx context.Context, id string) error
-	ListShortURLs(ctx context.Context) ([]*model.ShortURL, error)
+	ListShortURLs(ctx context.Context) ([]model.ShortURL, error)
 }
 
 type StatsService interface {
-	RecordView(ctx context.Context, id string) error
-	GetStats(ctx context.Context) ([]model.Stats, error)
-	CreateStats(ctx context.Context, stats model.Stats) (model.Stats, error)
+	CreateStats(ctx context.Context, s model.Stats) (model.Stats, error)
+	GetStatsByID(ctx context.Context, id string) (model.Stats, error)
 	DeleteStats(ctx context.Context, id string) error
+	ListStats(ctx context.Context) ([]model.Stats, error)
 }

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
-	"github.com/GritsyukLeonid/pastebin-go/internal/repository"
 )
 
 // CreatePasteHandler создаёт новую пасту
@@ -35,41 +34,14 @@ func CreatePasteHandler(w http.ResponseWriter, r *http.Request) {
 		p.ExpiresAt = p.CreatedAt.Add(7 * 24 * time.Hour)
 	}
 
-	if err := repository.StoreObject(&p); err != nil {
+	created, err := pasteService.CreatePaste(r.Context(), p)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(p)
-}
-
-// UpdatePasteHandler обновляет существующую пасту по ID
-// @Summary Обновить запись
-// @Description Обновляет paste по ID
-// @Tags pastes
-// @Accept json
-// @Produce json
-// @Param id path string true "ID пасты"
-// @Param paste body model.Paste true "Новые данные пасты"
-// @Success 200 {object} model.Paste
-// @Failure 400 {string} string "Некорректный JSON"
-// @Failure 404 {string} string "Paste не найден"
-// @Router /api/paste/{id} [put]
-func UpdatePasteHandler(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	id := parts[len(parts)-1]
-
-	var p model.Paste
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		http.Error(w, "invalid body", http.StatusBadRequest)
-		return
-	}
-	if err := repository.UpdatePaste(id, &p); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-	json.NewEncoder(w).Encode(p)
+	json.NewEncoder(w).Encode(created)
 }
 
 // DeletePasteHandler удаляет пасту по ID
@@ -84,7 +56,7 @@ func DeletePasteHandler(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	id := parts[len(parts)-1]
 
-	if err := repository.DeletePaste(id); err != nil {
+	if err := pasteService.DeletePaste(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}

@@ -2,44 +2,50 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"time"
 
+	"github.com/GritsyukLeonid/pastebin-go/internal/logging"
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
 	"github.com/GritsyukLeonid/pastebin-go/internal/repository"
 )
 
-type statsService struct{}
-
-func NewStatsService() StatsService {
-	repository.LoadData()
-	return &statsService{}
+type statsService struct {
+	storage repository.MongoStorageInterface
+	logger  logging.Logger
 }
 
-func (s *statsService) CreateStats(ctx context.Context, stats model.Stats) (model.Stats, error) {
-	if err := repository.StoreObject(&stats); err != nil {
+func NewStatsService(storage repository.MongoStorageInterface, logger logging.Logger) StatsService {
+	return &statsService{storage: storage, logger: logger}
+}
+
+func (s *statsService) CreateStats(ctx context.Context, stat model.Stats) (model.Stats, error) {
+	stat.ID = fmt.Sprintf("%d", time.Now().UnixNano())
+
+	if err := s.storage.SaveStats(stat); err != nil {
 		return model.Stats{}, err
 	}
-	return stats, nil
+
+	_ = s.logger.LogChange("stats", stat.ID, "created")
+	return stat, nil
 }
 
-func (s *statsService) RecordView(ctx context.Context, id string) error {
-	st, err := repository.GetStatsByID(id)
+func (s *statsService) GetStatsByID(ctx context.Context, id string) (model.Stats, error) {
+	stat, err := s.storage.GetStatsByID(id)
 	if err != nil {
-		return err
+		return model.Stats{}, err
 	}
-
-	st.Views++
-	return repository.UpdateStats(id, st)
-}
-
-func (s *statsService) GetStats(ctx context.Context) ([]model.Stats, error) {
-	list := repository.GetAllStats()
-	stats := make([]model.Stats, len(list))
-	for i, s := range list {
-		stats[i] = *s
-	}
-	return stats, nil
+	return *stat, nil
 }
 
 func (s *statsService) DeleteStats(ctx context.Context, id string) error {
-	return repository.DeleteStats(id)
+	err := s.storage.DeleteStats(id)
+	if err == nil {
+		_ = s.logger.LogChange("stats", id, "deleted")
+	}
+	return err
+}
+
+func (s *statsService) ListStats(ctx context.Context) ([]model.Stats, error) {
+	return s.storage.GetAllStats()
 }
