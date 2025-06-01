@@ -1,0 +1,25 @@
+-- +migrate Up
+
+CREATE TABLE IF NOT EXISTS pastes (
+    id TEXT PRIMARY KEY,
+    hash TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    views INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT PRIMARY KEY,
+    username TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS shorturls (
+    id TEXT PRIMARY KEY,
+    original TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stats (
+    id TEXT PRIMARY KEY,
+    views INTEGER NOT NULL DEFAULT 0
+);

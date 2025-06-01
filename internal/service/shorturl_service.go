@@ -11,11 +11,11 @@ import (
 )
 
 type shortURLService struct {
-	storage repository.MongoStorageInterface
+	storage repository.StorageInterface
 	logger  logging.Logger
 }
 
-func NewShortURLService(storage repository.MongoStorageInterface, logger logging.Logger) ShortURLService {
+func NewShortURLService(storage repository.StorageInterface, logger logging.Logger) ShortURLService {
 	return &shortURLService{storage: storage, logger: logger}
 }
 

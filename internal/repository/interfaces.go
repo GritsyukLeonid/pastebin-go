@@ -4,7 +4,7 @@ import (
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
 )
 
-type MongoStorageInterface interface {
+type StorageInterface interface {
 	// Paste
 	SavePaste(model.Paste) error
 	GetPasteByID(string) (*model.Paste, error)

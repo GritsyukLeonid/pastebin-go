@@ -11,11 +11,11 @@ import (
 )
 
 type pasteService struct {
-	storage repository.MongoStorageInterface
+	storage repository.StorageInterface
 	logger  logging.Logger
 }
 
-func NewPasteService(storage repository.MongoStorageInterface, logger logging.Logger) PasteService {
+func NewPasteService(storage repository.StorageInterface, logger logging.Logger) PasteService {
 	return &pasteService{storage: storage, logger: logger}
 }
 

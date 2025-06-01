@@ -11,11 +11,11 @@ import (
 )
 
 type userService struct {
-	storage repository.MongoStorageInterface
+	storage repository.StorageInterface
 	logger  logging.Logger
 }
 
-func NewUserService(storage repository.MongoStorageInterface, logger logging.Logger) UserService {
+func NewUserService(storage repository.StorageInterface, logger logging.Logger) UserService {
 	return &userService{storage: storage, logger: logger}
 }
 

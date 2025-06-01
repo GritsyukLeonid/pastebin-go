@@ -11,11 +11,11 @@ import (
 )
 
 type statsService struct {
-	storage repository.MongoStorageInterface
+	storage repository.StorageInterface
 	logger  logging.Logger
 }
 
-func NewStatsService(storage repository.MongoStorageInterface, logger logging.Logger) StatsService {
+func NewStatsService(storage repository.StorageInterface, logger logging.Logger) StatsService {
 	return &statsService{storage: storage, logger: logger}
 }
 

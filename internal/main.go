@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -10,42 +11,67 @@ import (
 	"time"
 
 	_ "github.com/GritsyukLeonid/pastebin-go/internal/docs"
-	httpSwagger "github.com/swaggo/http-swagger"
-
 	"github.com/GritsyukLeonid/pastebin-go/internal/handlers"
 	"github.com/GritsyukLeonid/pastebin-go/internal/logging"
 	"github.com/GritsyukLeonid/pastebin-go/internal/repository"
 	"github.com/GritsyukLeonid/pastebin-go/internal/service"
+
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
 )
 
-// @title Pastebin API
-// @version 1.0
-// @description API for managing pastes, users, stats, and short URLs.
-// @host localhost:8080
-// @BasePath /api
+func runMigrations(db *sql.DB) {
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Fatalf("ошибка инициализации миграционного драйвера: %v", err)
+	}
+
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://internal/migrations",
+		"postgres", driver,
+	)
+	if err != nil {
+		log.Fatalf("ошибка создания миграции: %v", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("ошибка применения миграции: %v", err)
+	}
+
+	log.Println("Миграции успешно применены")
+}
 
 func main() {
-	mongoURI := os.Getenv("MONGO_URI")
-	if mongoURI == "" {
-		mongoURI = "mongodb://localhost:27017"
+	dsn := os.Getenv("POSTGRES_DSN")
+	if dsn == "" {
+		dsn = "postgres://user:password@localhost:5432/pastebin?sslmode=disable"
 	}
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
 		redisAddr = "localhost:6379"
 	}
-	mongoStorage, err := repository.NewMongoStorage(mongoURI, "pastebin")
+
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatalf("Ошибка подключения к MongoDB: %v", err)
+		log.Fatalf("не удалось подключиться к PostgreSQL: %v", err)
 	}
+	defer db.Close()
+
+	runMigrations(db)
+
+	postgresStorage := repository.NewPostgresStorage(db)
 	redisLogger := logging.NewRedisLogger(redisAddr, 10*time.Minute)
 
-	// Прокидываем зависимости в хендлеры
 	handlers.SetServices(
-		service.NewPasteService(mongoStorage, redisLogger),
-		service.NewUserService(mongoStorage, redisLogger),
-		service.NewStatsService(mongoStorage, redisLogger),
-		service.NewShortURLService(mongoStorage, redisLogger),
+		service.NewPasteService(postgresStorage, redisLogger),
+		service.NewUserService(postgresStorage, redisLogger),
+		service.NewStatsService(postgresStorage, redisLogger),
+		service.NewShortURLService(postgresStorage, redisLogger),
 	)
 
 	stop := make(chan os.Signal, 1)
@@ -54,28 +80,23 @@ func main() {
 	router := mux.NewRouter()
 	api := router.PathPrefix("/api").Subrouter()
 
-	// Paste endpoints
 	api.HandleFunc("/paste", handlers.CreatePasteHandler).Methods(http.MethodPost)
 	api.HandleFunc("/paste/{id}", handlers.DeletePasteHandler).Methods(http.MethodDelete)
 
-	// User endpoints
 	api.HandleFunc("/user", handlers.GetUsersHandler).Methods(http.MethodGet)
 	api.HandleFunc("/user/{id}", handlers.GetUserByIDHandler).Methods(http.MethodGet)
 	api.HandleFunc("/user", handlers.CreateUserHandler).Methods(http.MethodPost)
 	api.HandleFunc("/user/{id}", handlers.DeleteUserHandler).Methods(http.MethodDelete)
 
-	// Stats endpoints
 	api.HandleFunc("/stats", handlers.GetAllStatsHandler).Methods(http.MethodGet)
 	api.HandleFunc("/stat/{id}", handlers.GetStatsByIDHandler).Methods(http.MethodGet)
 	api.HandleFunc("/stats", handlers.CreateStatsHandler).Methods(http.MethodPost)
 	api.HandleFunc("/stat/{id}", handlers.DeleteStatsHandler).Methods(http.MethodDelete)
 
-	// Short URL endpoints
 	api.HandleFunc("/shorturls", handlers.GetAllShortURLsHandler).Methods(http.MethodGet)
 	api.HandleFunc("/shorturl/{id}", handlers.GetShortURLByIDHandler).Methods(http.MethodGet)
 	api.HandleFunc("/shorturl/{id}", handlers.DeleteShortURLHandler).Methods(http.MethodDelete)
 
-	// Swagger
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	server := &http.Server{
@@ -84,17 +105,16 @@ func main() {
 	}
 
 	go func() {
-		log.Println("HTTP server started on :8080")
-		log.Println("Swagger UI available at http://localhost:8080/swagger/index.html")
+		log.Println("🚀 HTTP server started on :8080")
+		log.Println("📚 Swagger UI: http://localhost:8080/swagger/index.html")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("HTTP server error: %v", err)
 		}
 	}()
 
 	<-stop
-	log.Println("Shutting down server...")
-
+	log.Println("🛑 Shutting down server...")
 	if err := server.Shutdown(context.Background()); err != nil {
-		log.Fatalf("Server shutdown error: %v", err)
+		log.Fatalf("Ошибка при остановке сервера: %v", err)
 	}
 }
