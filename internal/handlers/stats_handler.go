@@ -6,7 +6,16 @@ import (
 	"strings"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
+	"github.com/GritsyukLeonid/pastebin-go/internal/service"
 )
+
+type StatsHandler struct {
+	service service.StatsService
+}
+
+func NewStatsHandler(s service.StatsService) *StatsHandler {
+	return &StatsHandler{service: s}
+}
 
 // GetAllStatsHandler возвращает все записи статистики
 // @Summary Получить все статистики
@@ -15,8 +24,8 @@ import (
 // @Produce json
 // @Success 200 {array} model.Stats
 // @Router /api/stats [get]
-func GetAllStatsHandler(w http.ResponseWriter, r *http.Request) {
-	stats, err := statsService.ListStats(r.Context())
+func (h *StatsHandler) GetAllStatsHandler(w http.ResponseWriter, r *http.Request) {
+	stats, err := h.service.ListStats(r.Context())
 	if err != nil {
 		http.Error(w, "Ошибка при получении статистики", http.StatusInternalServerError)
 		return
@@ -34,9 +43,9 @@ func GetAllStatsHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} model.Stats
 // @Failure 404 {string} string "Статистика не найдена"
 // @Router /api/stat/{id} [get]
-func GetStatsByIDHandler(w http.ResponseWriter, r *http.Request) {
+func (h *StatsHandler) GetStatsByIDHandler(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/stat/")
-	stat, err := statsService.GetStatsByID(r.Context(), id)
+	stat, err := h.service.GetStatsByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -56,13 +65,13 @@ func GetStatsByIDHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Некорректный ввод"
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/stats [post]
-func CreateStatsHandler(w http.ResponseWriter, r *http.Request) {
+func (h *StatsHandler) CreateStatsHandler(w http.ResponseWriter, r *http.Request) {
 	var s model.Stats
 	if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	created, err := statsService.CreateStats(r.Context(), s)
+	created, err := h.service.CreateStats(r.Context(), s)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -79,9 +88,9 @@ func CreateStatsHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 204 {string} string "Статистика удалена"
 // @Failure 404 {string} string "Статистика не найдена"
 // @Router /api/stat/{id} [delete]
-func DeleteStatsHandler(w http.ResponseWriter, r *http.Request) {
+func (h *StatsHandler) DeleteStatsHandler(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/stat/")
-	if err := statsService.DeleteStats(r.Context(), id); err != nil {
+	if err := h.service.DeleteStats(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}

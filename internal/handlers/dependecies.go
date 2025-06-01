@@ -5,20 +5,20 @@ import (
 )
 
 var (
-	pasteService    service.PasteService
-	userService     service.UserService
-	statsService    service.StatsService
-	shortURLService service.ShortURLService
+	Paste    *PasteHandler
+	User     *UserHandler
+	Stats    *StatsHandler
+	ShortURL *ShortURLHandler
 )
 
-func SetServices(
+func InitHandlers(
 	ps service.PasteService,
 	us service.UserService,
 	ss service.StatsService,
 	sh service.ShortURLService,
 ) {
-	pasteService = ps
-	userService = us
-	statsService = ss
-	shortURLService = sh
+	Paste = NewPasteHandler(ps)
+	User = NewUserHandler(us)
+	Stats = NewStatsHandler(ss)
+	ShortURL = NewShortURLHandler(sh)
 }

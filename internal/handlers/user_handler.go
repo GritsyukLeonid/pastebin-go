@@ -6,7 +6,16 @@ import (
 	"strings"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
+	"github.com/GritsyukLeonid/pastebin-go/internal/service"
 )
+
+type UserHandler struct {
+	service service.UserService
+}
+
+func NewUserHandler(s service.UserService) *UserHandler {
+	return &UserHandler{service: s}
+}
 
 // GetUsersHandler возвращает всех пользователей
 // @Summary Получить всех пользователей
@@ -16,8 +25,8 @@ import (
 // @Success 200 {array} model.User
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/users [get]
-func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
-	users, err := userService.ListUsers(r.Context())
+func (h *UserHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
+	users, err := h.service.ListUsers(r.Context())
 	if err != nil {
 		http.Error(w, "Ошибка при получении пользователей", http.StatusInternalServerError)
 		return
@@ -36,11 +45,11 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Некорректный запрос"
 // @Failure 404 {string} string "Пользователь не найден"
 // @Router /api/user/{id} [get]
-func GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/user/")
-	id := idStr // ID в Mongo и сервисе — string, а не int64
+	id := idStr
 
-	user, err := userService.GetUserByID(r.Context(), id)
+	user, err := h.service.GetUserByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -60,7 +69,7 @@ func GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Некорректный запрос"
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/user [post]
-func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
@@ -70,7 +79,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "username required", http.StatusBadRequest)
 		return
 	}
-	created, err := userService.CreateUser(r.Context(), u)
+	created, err := h.service.CreateUser(r.Context(), u)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -87,11 +96,11 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 204 {string} string "Пользователь удален"
 // @Failure 404 {string} string "Пользователь не найден"
 // @Router /api/user/{id} [delete]
-func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/user/")
-	id := idStr // ID как string, чтобы не преобразовывать
+	id := idStr
 
-	if err := userService.DeleteUser(r.Context(), id); err != nil {
+	if err := h.service.DeleteUser(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
