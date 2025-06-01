@@ -3,12 +3,19 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
-	"github.com/GritsyukLeonid/pastebin-go/internal/repository"
+	"github.com/GritsyukLeonid/pastebin-go/internal/service"
 )
+
+type UserHandler struct {
+	service service.UserService
+}
+
+func NewUserHandler(s service.UserService) *UserHandler {
+	return &UserHandler{service: s}
+}
 
 // GetUsersHandler возвращает всех пользователей
 // @Summary Получить всех пользователей
@@ -16,11 +23,14 @@ import (
 // @Tags users
 // @Produce json
 // @Success 200 {array} model.User
-// @Failure 400 {string} string "Некорректный запрос"
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/users [get]
-func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
-	users := repository.GetAllUsers()
+func (h *UserHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
+	users, err := h.service.ListUsers(r.Context())
+	if err != nil {
+		http.Error(w, "Ошибка при получении пользователей", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
 }
@@ -35,14 +45,11 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Некорректный запрос"
 // @Failure 404 {string} string "Пользователь не найден"
 // @Router /api/user/{id} [get]
-func GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/user/")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
-		return
-	}
-	user, err := repository.GetUserByID(id)
+	id := idStr
+
+	user, err := h.service.GetUserByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -62,7 +69,7 @@ func GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Некорректный запрос"
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/user [post]
-func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
@@ -72,44 +79,13 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "username required", http.StatusBadRequest)
 		return
 	}
-	if err := repository.AddUser(&u); err != nil {
+	created, err := h.service.CreateUser(r.Context(), u)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(u)
-}
-
-// UpdateUserHandler обновляет пользователя по ID
-// @Summary Обновить пользователя
-// @Description Обновляет пользователя по ID
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param id path int true "ID пользователя"
-// @Param user body model.User true "Обновленные данные пользователя"
-// @Success 200 {object} model.User
-// @Failure 400 {string} string "Некорректный запрос"
-// @Failure 404 {string} string "Пользователь не найден"
-// @Router /api/user/{id} [put]
-func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/user/")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
-		return
-	}
-	var u model.User
-	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
-		http.Error(w, "invalid body", http.StatusBadRequest)
-		return
-	}
-	if err := repository.UpdateUser(id, &u); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(u)
+	json.NewEncoder(w).Encode(created)
 }
 
 // DeleteUserHandler удаляет пользователя по ID
@@ -120,14 +96,11 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 204 {string} string "Пользователь удален"
 // @Failure 404 {string} string "Пользователь не найден"
 // @Router /api/user/{id} [delete]
-func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/user/")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
-		return
-	}
-	if err := repository.DeleteUser(id); err != nil {
+	id := idStr
+
+	if err := h.service.DeleteUser(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
