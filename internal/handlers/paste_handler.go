@@ -7,7 +7,16 @@ import (
 	"time"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
+	"github.com/GritsyukLeonid/pastebin-go/internal/service"
 )
+
+type PasteHandler struct {
+	service service.PasteService
+}
+
+func NewPasteHandler(s service.PasteService) *PasteHandler {
+	return &PasteHandler{service: s}
+}
 
 // CreatePasteHandler создаёт новую пасту
 // @Summary Создать новую запись
@@ -20,7 +29,7 @@ import (
 // @Failure 400 {string} string "Некорректный JSON"
 // @Failure 500 {string} string "Ошибка на сервере"
 // @Router /api/paste [post]
-func CreatePasteHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PasteHandler) CreatePasteHandler(w http.ResponseWriter, r *http.Request) {
 	var p model.Paste
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -34,7 +43,7 @@ func CreatePasteHandler(w http.ResponseWriter, r *http.Request) {
 		p.ExpiresAt = p.CreatedAt.Add(7 * 24 * time.Hour)
 	}
 
-	created, err := pasteService.CreatePaste(r.Context(), p)
+	created, err := h.service.CreatePaste(r.Context(), p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -52,13 +61,35 @@ func CreatePasteHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 204 {string} string "Паста удалена"
 // @Failure 404 {string} string "Paste не найден"
 // @Router /api/paste/{id} [delete]
-func DeletePasteHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PasteHandler) DeletePasteHandler(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	id := parts[len(parts)-1]
 
-	if err := pasteService.DeletePaste(r.Context(), id); err != nil {
+	if err := h.service.DeletePaste(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// GetPasteByIDHandler возвращает пасту по ID
+// @Summary Получить запись по ID
+// @Description Возвращает paste по ID
+// @Tags pastes
+// @Produce json
+// @Param id path string true "ID пасты"
+// @Success 200 {object} model.Paste
+// @Failure 404 {string} string "Paste не найден"
+// @Router /api/paste/{id} [get]
+func (h *PasteHandler) GetPasteByIDHandler(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	id := parts[len(parts)-1]
+
+	paste, err := h.service.GetPasteByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Paste not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(paste)
 }

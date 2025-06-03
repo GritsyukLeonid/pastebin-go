@@ -67,7 +67,7 @@ func main() {
 	postgresStorage := repository.NewPostgresStorage(db)
 	redisLogger := logging.NewRedisLogger(redisAddr, 10*time.Minute)
 
-	handlers.SetServices(
+	handlers.InitHandlers(
 		service.NewPasteService(postgresStorage, redisLogger),
 		service.NewUserService(postgresStorage, redisLogger),
 		service.NewStatsService(postgresStorage, redisLogger),
@@ -80,22 +80,23 @@ func main() {
 	router := mux.NewRouter()
 	api := router.PathPrefix("/api").Subrouter()
 
-	api.HandleFunc("/paste", handlers.CreatePasteHandler).Methods(http.MethodPost)
-	api.HandleFunc("/paste/{id}", handlers.DeletePasteHandler).Methods(http.MethodDelete)
+	api.HandleFunc("/paste", handlers.Paste.CreatePasteHandler).Methods(http.MethodPost)
+	api.HandleFunc("/paste/{id}", handlers.Paste.DeletePasteHandler).Methods(http.MethodDelete)
+	api.HandleFunc("/paste/{id}", handlers.Paste.GetPasteByIDHandler).Methods(http.MethodGet)
 
-	api.HandleFunc("/user", handlers.GetUsersHandler).Methods(http.MethodGet)
-	api.HandleFunc("/user/{id}", handlers.GetUserByIDHandler).Methods(http.MethodGet)
-	api.HandleFunc("/user", handlers.CreateUserHandler).Methods(http.MethodPost)
-	api.HandleFunc("/user/{id}", handlers.DeleteUserHandler).Methods(http.MethodDelete)
+	api.HandleFunc("/user", handlers.User.GetUsersHandler).Methods(http.MethodGet)
+	api.HandleFunc("/user/{id}", handlers.User.GetUserByIDHandler).Methods(http.MethodGet)
+	api.HandleFunc("/user", handlers.User.CreateUserHandler).Methods(http.MethodPost)
+	api.HandleFunc("/user/{id}", handlers.User.DeleteUserHandler).Methods(http.MethodDelete)
 
-	api.HandleFunc("/stats", handlers.GetAllStatsHandler).Methods(http.MethodGet)
-	api.HandleFunc("/stat/{id}", handlers.GetStatsByIDHandler).Methods(http.MethodGet)
-	api.HandleFunc("/stats", handlers.CreateStatsHandler).Methods(http.MethodPost)
-	api.HandleFunc("/stat/{id}", handlers.DeleteStatsHandler).Methods(http.MethodDelete)
+	api.HandleFunc("/stats", handlers.Stats.GetAllStatsHandler).Methods(http.MethodGet)
+	api.HandleFunc("/stat/{id}", handlers.Stats.GetStatsByIDHandler).Methods(http.MethodGet)
+	api.HandleFunc("/stats", handlers.Stats.CreateStatsHandler).Methods(http.MethodPost)
+	api.HandleFunc("/stat/{id}", handlers.Stats.DeleteStatsHandler).Methods(http.MethodDelete)
 
-	api.HandleFunc("/shorturls", handlers.GetAllShortURLsHandler).Methods(http.MethodGet)
-	api.HandleFunc("/shorturl/{id}", handlers.GetShortURLByIDHandler).Methods(http.MethodGet)
-	api.HandleFunc("/shorturl/{id}", handlers.DeleteShortURLHandler).Methods(http.MethodDelete)
+	api.HandleFunc("/shorturls", handlers.ShortURL.GetAllShortURLsHandler).Methods(http.MethodGet)
+	api.HandleFunc("/shorturl/{id}", handlers.ShortURL.GetShortURLByIDHandler).Methods(http.MethodGet)
+	api.HandleFunc("/shorturl/{id}", handlers.ShortURL.DeleteShortURLHandler).Methods(http.MethodDelete)
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 

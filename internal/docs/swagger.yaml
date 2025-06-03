@@ -1,4 +1,3 @@
-basePath: /api
 definitions:
   model.Paste:
     properties:
@@ -42,12 +41,8 @@ definitions:
       username:
         type: string
     type: object
-host: localhost:8080
 info:
   contact: {}
-  description: API for managing pastes, users, stats, and short URLs.
-  title: Pastebin API
-  version: "1.0"
 paths:
   /api/paste:
     post:
@@ -100,22 +95,14 @@ paths:
       summary: Удалить запись
       tags:
       - pastes
-    put:
-      consumes:
-      - application/json
-      description: Обновляет paste по ID
+    get:
+      description: Возвращает paste по ID
       parameters:
       - description: ID пасты
         in: path
         name: id
         required: true
         type: string
-      - description: Новые данные пасты
-        in: body
-        name: paste
-        required: true
-        schema:
-          $ref: '#/definitions/model.Paste'
       produces:
       - application/json
       responses:
@@ -123,15 +110,11 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.Paste'
-        "400":
-          description: Некорректный JSON
-          schema:
-            type: string
         "404":
           description: Paste не найден
           schema:
             type: string
-      summary: Обновить запись
+      summary: Получить запись по ID
       tags:
       - pastes
   /api/shorturl/{id}:
@@ -175,40 +158,6 @@ paths:
           schema:
             type: string
       summary: Получить короткий URL
-      tags:
-      - shorturls
-    put:
-      consumes:
-      - application/json
-      description: Обновляет короткий URL по ID
-      parameters:
-      - description: ID ShortURL
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Данные ShortURL
-        in: body
-        name: shorturl
-        required: true
-        schema:
-          $ref: '#/definitions/model.ShortURL'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "400":
-          description: Некорректный ввод
-          schema:
-            type: string
-        "404":
-          description: ShortURL не найден
-          schema:
-            type: string
-      summary: Обновить короткий URL
       tags:
       - shorturls
   /api/shorturls:
@@ -269,38 +218,6 @@ paths:
       summary: Получить статистику по ID
       tags:
       - stats
-    put:
-      consumes:
-      - application/json
-      description: Обновляет запись статистики по ID
-      parameters:
-      - description: ID статистики
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Обновленная статистика
-        in: body
-        name: stats
-        required: true
-        schema:
-          $ref: '#/definitions/model.Stats'
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "400":
-          description: Некорректный ввод
-          schema:
-            type: string
-        "404":
-          description: Статистика не найдена
-          schema:
-            type: string
-      summary: Обновить статистику
-      tags:
-      - stats
   /api/stats:
     get:
       description: Возвращает список всех статистик
@@ -331,9 +248,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: Статистика создана
+          description: Created
           schema:
-            type: string
+            $ref: '#/definitions/model.Stats'
         "400":
           description: Некорректный ввод
           schema:
@@ -422,40 +339,6 @@ paths:
       summary: Получить пользователя по ID
       tags:
       - users
-    put:
-      consumes:
-      - application/json
-      description: Обновляет пользователя по ID
-      parameters:
-      - description: ID пользователя
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Обновленные данные пользователя
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/model.User'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.User'
-        "400":
-          description: Некорректный запрос
-          schema:
-            type: string
-        "404":
-          description: Пользователь не найден
-          schema:
-            type: string
-      summary: Обновить пользователя
-      tags:
-      - users
   /api/users:
     get:
       description: Возвращает список всех пользователей
@@ -468,10 +351,6 @@ paths:
             items:
               $ref: '#/definitions/model.User'
             type: array
-        "400":
-          description: Некорректный запрос
-          schema:
-            type: string
         "500":
           description: Ошибка сервера
           schema:

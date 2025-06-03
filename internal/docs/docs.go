@@ -62,18 +62,15 @@ const docTemplate = `{
             }
         },
         "/api/paste/{id}": {
-            "put": {
-                "description": "Обновляет paste по ID",
-                "consumes": [
-                    "application/json"
-                ],
+            "get": {
+                "description": "Возвращает paste по ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "pastes"
                 ],
-                "summary": "Обновить запись",
+                "summary": "Получить запись по ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -81,15 +78,6 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Новые данные пасты",
-                        "name": "paste",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.Paste"
-                        }
                     }
                 ],
                 "responses": {
@@ -97,12 +85,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/model.Paste"
-                        }
-                    },
-                    "400": {
-                        "description": "Некорректный JSON",
-                        "schema": {
-                            "type": "string"
                         }
                     },
                     "404": {
@@ -168,57 +150,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/model.ShortURL"
-                        }
-                    },
-                    "404": {
-                        "description": "ShortURL не найден",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Обновляет короткий URL по ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "shorturls"
-                ],
-                "summary": "Обновить короткий URL",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID ShortURL",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Данные ShortURL",
-                        "name": "shorturl",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.ShortURL"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Некорректный ввод",
-                        "schema": {
-                            "type": "string"
                         }
                     },
                     "404": {
@@ -317,54 +248,6 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
-                "description": "Обновляет запись статистики по ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "stats"
-                ],
-                "summary": "Обновить статистику",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID статистики",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Обновленная статистика",
-                        "name": "stats",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.Stats"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Некорректный ввод",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Статистика не найдена",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
             "delete": {
                 "description": "Удаляет запись статистики по ID",
                 "tags": [
@@ -443,9 +326,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Статистика создана",
+                        "description": "Created",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/model.Stats"
                         }
                     },
                     "400": {
@@ -549,57 +432,6 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
-                "description": "Обновляет пользователя по ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Обновить пользователя",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID пользователя",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Обновленные данные пользователя",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.User"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.User"
-                        }
-                    },
-                    "400": {
-                        "description": "Некорректный запрос",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Пользователь не найден",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
             "delete": {
                 "description": "Удаляет пользователя по ID",
                 "tags": [
@@ -649,12 +481,6 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/model.User"
                             }
-                        }
-                    },
-                    "400": {
-                        "description": "Некорректный запрос",
-                        "schema": {
-                            "type": "string"
                         }
                     },
                     "500": {
@@ -738,12 +564,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/api",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Pastebin API",
-	Description:      "API for managing pastes, users, stats, and short URLs.",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
