@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
-	"github.com/GritsyukLeonid/pastebin-go/internal/repository"
 )
 
 // GetAllStatsHandler возвращает все записи статистики
@@ -17,7 +16,11 @@ import (
 // @Success 200 {array} model.Stats
 // @Router /api/stats [get]
 func GetAllStatsHandler(w http.ResponseWriter, r *http.Request) {
-	stats := repository.GetAllStats()
+	stats, err := statsService.ListStats(r.Context())
+	if err != nil {
+		http.Error(w, "Ошибка при получении статистики", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)
 }
@@ -33,7 +36,7 @@ func GetAllStatsHandler(w http.ResponseWriter, r *http.Request) {
 // @Router /api/stat/{id} [get]
 func GetStatsByIDHandler(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/stat/")
-	stat, err := repository.GetStatsByID(id)
+	stat, err := statsService.GetStatsByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -49,7 +52,7 @@ func GetStatsByIDHandler(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param stats body model.Stats true "Статистика"
-// @Success 201 {string} string "Статистика создана"
+// @Success 201 {object} model.Stats
 // @Failure 400 {string} string "Некорректный ввод"
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/stats [post]
@@ -59,36 +62,13 @@ func CreateStatsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := repository.StoreObject(&s); err != nil {
+	created, err := statsService.CreateStats(r.Context(), s)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-}
-
-// UpdateStatsHandler обновляет статистику по ID
-// @Summary Обновить статистику
-// @Description Обновляет запись статистики по ID
-// @Tags stats
-// @Accept json
-// @Param id path string true "ID статистики"
-// @Param stats body model.Stats true "Обновленная статистика"
-// @Success 200 {string} string "OK"
-// @Failure 400 {string} string "Некорректный ввод"
-// @Failure 404 {string} string "Статистика не найдена"
-// @Router /api/stat/{id} [put]
-func UpdateStatsHandler(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, "/api/stat/")
-	var updated model.Stats
-	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if err := repository.UpdateStats(id, &updated); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(created)
 }
 
 // DeleteStatsHandler удаляет статистику по ID
@@ -101,7 +81,7 @@ func UpdateStatsHandler(w http.ResponseWriter, r *http.Request) {
 // @Router /api/stat/{id} [delete]
 func DeleteStatsHandler(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/stat/")
-	if err := repository.DeleteStats(id); err != nil {
+	if err := statsService.DeleteStats(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}

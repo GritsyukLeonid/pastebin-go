@@ -3,53 +3,49 @@ package service
 import (
 	"context"
 	"fmt"
-	"strconv"
+	"time"
 
+	"github.com/GritsyukLeonid/pastebin-go/internal/logging"
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
 	"github.com/GritsyukLeonid/pastebin-go/internal/repository"
 )
 
-type userService struct{}
+type userService struct {
+	storage repository.StorageInterface
+	logger  logging.Logger
+}
 
-func NewUserService() UserService {
-	repository.LoadData()
-	return &userService{}
+func NewUserService(storage repository.StorageInterface, logger logging.Logger) UserService {
+	return &userService{storage: storage, logger: logger}
 }
 
 func (s *userService) CreateUser(ctx context.Context, u model.User) (model.User, error) {
-	u.ID = int64(len(repository.GetAllUsers()) + 1)
+	u.ID = time.Now().UnixNano()
 
-	if err := repository.AddUser(&u); err != nil {
+	if err := s.storage.SaveUser(u); err != nil {
 		return model.User{}, err
 	}
+
+	_ = s.logger.LogChange("user", fmt.Sprintf("%d", u.ID), "created")
 	return u, nil
 }
 
 func (s *userService) GetUserByID(ctx context.Context, id string) (model.User, error) {
-	uid, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		return model.User{}, fmt.Errorf("invalid user ID: %v", err)
-	}
-	u, err := repository.GetUserByID(uid)
+	user, err := s.storage.GetUserByID(id)
 	if err != nil {
 		return model.User{}, err
 	}
-	return *u, nil
+	return *user, nil
 }
 
 func (s *userService) DeleteUser(ctx context.Context, id string) error {
-	uid, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		return fmt.Errorf("invalid user ID: %v", err)
+	err := s.storage.DeleteUser(id)
+	if err == nil {
+		_ = s.logger.LogChange("user", id, "deleted")
 	}
-	return repository.DeleteUser(uid)
+	return err
 }
 
 func (s *userService) ListUsers(ctx context.Context) ([]model.User, error) {
-	raw := repository.GetAllUsers()
-	users := make([]model.User, len(raw))
-	for i, u := range raw {
-		users[i] = *u
-	}
-	return users, nil
+	return s.storage.GetAllUsers()
 }
