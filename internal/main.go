@@ -65,6 +65,16 @@ func main() {
 	runMigrations(db)
 
 	postgresStorage := repository.NewPostgresStorage(db)
+
+	go func() {
+		for {
+			if err := postgresStorage.DeleteExpiredPastes(); err != nil {
+				log.Printf("ошибка при удалении просроченных записей: %v", err)
+			}
+			time.Sleep(1 * time.Hour)
+		}
+	}()
+
 	redisLogger := logging.NewRedisLogger(redisAddr, 10*time.Minute)
 
 	handlers.InitHandlers(

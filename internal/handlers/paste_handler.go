@@ -43,6 +43,16 @@ func (h *PasteHandler) CreatePasteHandler(w http.ResponseWriter, r *http.Request
 		p.ExpiresAt = p.CreatedAt.Add(7 * 24 * time.Hour)
 	}
 
+	if p.ExpiresAt.Before(time.Now()) {
+		http.Error(w, "Expiration date must be in the future", http.StatusBadRequest)
+		return
+	}
+
+	if !p.ExpiresAt.After(p.CreatedAt) {
+		http.Error(w, "Expiration date must be after creation date", http.StatusBadRequest)
+		return
+	}
+
 	created, err := h.service.CreatePaste(r.Context(), p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -40,6 +40,12 @@ func (s *PostgresStorage) DeletePaste(id string) error {
 	return err
 }
 
+func (s *PostgresStorage) DeleteExpiredPastes() error {
+	query := `DELETE FROM pastes WHERE expires_at < NOW()`
+	_, err := s.db.ExecContext(context.Background(), query)
+	return err
+}
+
 func (s *PostgresStorage) GetAllPastes() ([]model.Paste, error) {
 	query := `SELECT id, hash, content, created_at, expires_at, views FROM pastes`
 	rows, err := s.db.QueryContext(context.Background(), query)
