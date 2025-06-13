@@ -11,6 +11,7 @@ type PasteService interface {
 	GetPasteByID(ctx context.Context, id string) (model.Paste, error)
 	DeletePaste(ctx context.Context, id string) error
 	ListPastes(ctx context.Context) ([]model.Paste, error)
+	GetPasteByHash(ctx context.Context, hash string) (model.Paste, error)
 }
 
 type UserService interface {
@@ -32,4 +33,5 @@ type StatsService interface {
 	GetStatsByID(ctx context.Context, id string) (model.Stats, error)
 	DeleteStats(ctx context.Context, id string) error
 	ListStats(ctx context.Context) ([]model.Stats, error)
+	IncrementViews(ctx context.Context, id string) error
 }

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/sha1"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,20 +13,30 @@ import (
 )
 
 type pasteService struct {
-	storage repository.StorageInterface
-	logger  logging.Logger
+	storage      repository.StorageInterface
+	logger       logging.Logger
+	statsService StatsService
 }
 
-func NewPasteService(storage repository.StorageInterface, logger logging.Logger) PasteService {
-	return &pasteService{storage: storage, logger: logger}
+func NewPasteService(storage repository.StorageInterface, logger logging.Logger, stats StatsService) PasteService {
+	return &pasteService{storage: storage, logger: logger, statsService: stats}
 }
 
 func (s *pasteService) CreatePaste(ctx context.Context, p model.Paste) (model.Paste, error) {
-	p.ID = fmt.Sprintf("%d", time.Now().UnixNano())
-	p.CreatedAt = time.Now()
+	now := time.Now()
+	p.ID = fmt.Sprintf("%d", now.UnixNano())
+	p.CreatedAt = now
+
+	hash := sha1.New()
+	hash.Write([]byte(p.Content + now.String()))
+	p.Hash = fmt.Sprintf("%x", hash.Sum(nil))[:10]
 
 	if err := s.storage.SavePaste(p); err != nil {
 		return model.Paste{}, err
+	}
+
+	if p.ExpiresAt.Before(now) {
+		return model.Paste{}, errors.New("expiration must be in the future")
 	}
 
 	_ = s.logger.LogChange("paste", p.ID, "created")
@@ -36,6 +48,16 @@ func (s *pasteService) GetPasteByID(ctx context.Context, id string) (model.Paste
 	if err != nil {
 		return model.Paste{}, err
 	}
+	return *paste, nil
+}
+
+func (s *pasteService) GetPasteByHash(ctx context.Context, hash string) (model.Paste, error) {
+	paste, err := s.storage.GetPasteByHash(hash)
+	if err != nil {
+		return model.Paste{}, err
+	}
+
+	_ = s.statsService.IncrementViews(ctx, hash)
 	return *paste, nil
 }
 

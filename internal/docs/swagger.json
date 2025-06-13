@@ -50,6 +50,41 @@
                 }
             }
         },
+        "/api/paste/hash/{hash}": {
+            "get": {
+                "description": "Возвращает paste по hash",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pastes"
+                ],
+                "summary": "Получить запись по хэшу",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Hash пасты",
+                        "name": "hash",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Paste"
+                        }
+                    },
+                    "404": {
+                        "description": "Paste не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/paste/{id}": {
             "get": {
                 "description": "Возвращает paste по ID",

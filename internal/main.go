@@ -77,10 +77,12 @@ func main() {
 
 	redisLogger := logging.NewRedisLogger(redisAddr, 10*time.Minute)
 
+	statsService := service.NewStatsService(postgresStorage, redisLogger)
+
 	handlers.InitHandlers(
-		service.NewPasteService(postgresStorage, redisLogger),
+		service.NewPasteService(postgresStorage, redisLogger, statsService),
 		service.NewUserService(postgresStorage, redisLogger),
-		service.NewStatsService(postgresStorage, redisLogger),
+		statsService,
 		service.NewShortURLService(postgresStorage, redisLogger),
 	)
 

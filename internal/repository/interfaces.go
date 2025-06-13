@@ -10,6 +10,7 @@ type StorageInterface interface {
 	GetPasteByID(string) (*model.Paste, error)
 	DeletePaste(string) error
 	GetAllPastes() ([]model.Paste, error)
+	GetPasteByHash(string) (*model.Paste, error)
 
 	// User
 	SaveUser(model.User) error

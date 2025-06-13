@@ -117,6 +117,29 @@ paths:
       summary: Получить запись по ID
       tags:
       - pastes
+  /api/paste/hash/{hash}:
+    get:
+      description: Возвращает paste по hash
+      parameters:
+      - description: Hash пасты
+        in: path
+        name: hash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Paste'
+        "404":
+          description: Paste не найден
+          schema:
+            type: string
+      summary: Получить запись по хэшу
+      tags:
+      - pastes
   /api/shorturl/{id}:
     delete:
       description: Удаляет короткий URL по ID

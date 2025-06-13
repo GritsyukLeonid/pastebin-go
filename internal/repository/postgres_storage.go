@@ -110,6 +110,18 @@ func (s *PostgresStorage) GetAllUsers() ([]model.User, error) {
 	return users, nil
 }
 
+func (s *PostgresStorage) GetPasteByHash(hash string) (*model.Paste, error) {
+	query := `SELECT id, hash, content, created_at, expires_at, views FROM pastes WHERE hash = $1`
+	row := s.db.QueryRowContext(context.Background(), query, hash)
+
+	var p model.Paste
+	err := row.Scan(&p.ID, &p.Hash, &p.Content, &p.CreatedAt, &p.ExpiresAt, &p.Views)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
 // ShortURL
 func (s *PostgresStorage) SaveShortURL(u model.ShortURL) error {
 	query := `INSERT INTO shorturls (id, original) VALUES ($1, $2)`

@@ -41,6 +41,10 @@ func (m *mockStatsStorage) GetAllStats() ([]model.Stats, error) {
 	return out, nil
 }
 
+func (m *mockStatsStorage) GetPasteByHash(hash string) (*model.Paste, error) {
+	return nil, nil
+}
+
 func (m *mockStatsStorage) SavePaste(model.Paste) error                     { return nil }
 func (m *mockStatsStorage) GetPasteByID(string) (*model.Paste, error)       { return nil, nil }
 func (m *mockStatsStorage) DeletePaste(string) error                        { return nil }

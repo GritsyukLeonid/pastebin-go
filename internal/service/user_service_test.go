@@ -48,6 +48,10 @@ func (m *mockUserStorage) GetAllUsers() ([]model.User, error) {
 	return out, nil
 }
 
+func (m *mockUserStorage) GetPasteByHash(hash string) (*model.Paste, error) {
+	return nil, nil
+}
+
 func (m *mockUserStorage) SavePaste(model.Paste) error                     { return nil }
 func (m *mockUserStorage) GetPasteByID(string) (*model.Paste, error)       { return nil, nil }
 func (m *mockUserStorage) DeletePaste(string) error                        { return nil }

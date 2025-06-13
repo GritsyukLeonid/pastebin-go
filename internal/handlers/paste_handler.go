@@ -30,30 +30,33 @@ func NewPasteHandler(s service.PasteService) *PasteHandler {
 // @Failure 500 {string} string "Ошибка на сервере"
 // @Router /api/paste [post]
 func (h *PasteHandler) CreatePasteHandler(w http.ResponseWriter, r *http.Request) {
-	var p model.Paste
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+	type createRequest struct {
+		Content   string    `json:"content"`
+		ExpiresAt time.Time `json:"expiresAt"`
+	}
+
+	var req createRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if p.CreatedAt.IsZero() {
-		p.CreatedAt = time.Now()
-	}
-	if p.ExpiresAt.IsZero() {
-		p.ExpiresAt = p.CreatedAt.Add(7 * 24 * time.Hour)
+	if req.Content == "" {
+		http.Error(w, "content required", http.StatusBadRequest)
+		return
 	}
 
-	if p.ExpiresAt.Before(time.Now()) {
+	if req.ExpiresAt.Before(time.Now()) {
 		http.Error(w, "Expiration date must be in the future", http.StatusBadRequest)
 		return
 	}
 
-	if !p.ExpiresAt.After(p.CreatedAt) {
-		http.Error(w, "Expiration date must be after creation date", http.StatusBadRequest)
-		return
+	paste := model.Paste{
+		Content:   req.Content,
+		ExpiresAt: req.ExpiresAt,
 	}
 
-	created, err := h.service.CreatePaste(r.Context(), p)
+	created, err := h.service.CreatePaste(r.Context(), paste)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -100,6 +103,28 @@ func (h *PasteHandler) GetPasteByIDHandler(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "Paste not found", http.StatusNotFound)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(paste)
+}
+
+// GetPasteByHashHandler возвращает пасту по хэшу
+// @Summary Получить запись по хэшу
+// @Description Возвращает paste по hash
+// @Tags pastes
+// @Produce json
+// @Param hash path string true "Hash пасты"
+// @Success 200 {object} model.Paste
+// @Failure 404 {string} string "Paste не найден"
+// @Router /api/paste/hash/{hash} [get]
+func (h *PasteHandler) GetPasteByHashHandler(w http.ResponseWriter, r *http.Request) {
+	hash := strings.TrimPrefix(r.URL.Path, "/api/paste/hash/")
+
+	paste, err := h.service.GetPasteByHash(r.Context(), hash)
+	if err != nil {
+		http.Error(w, "Paste not found", http.StatusNotFound)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(paste)
 }

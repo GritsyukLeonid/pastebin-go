@@ -49,3 +49,12 @@ func (s *statsService) DeleteStats(ctx context.Context, id string) error {
 func (s *statsService) ListStats(ctx context.Context) ([]model.Stats, error) {
 	return s.storage.GetAllStats()
 }
+
+func (s *statsService) IncrementViews(ctx context.Context, id string) error {
+	stat, err := s.storage.GetStatsByID(id)
+	if err != nil {
+		return err
+	}
+	stat.Views++
+	return s.storage.SaveStats(*stat)
+}
