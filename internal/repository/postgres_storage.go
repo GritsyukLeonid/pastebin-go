@@ -209,3 +209,8 @@ func (s *PostgresStorage) GetAllStats() ([]model.Stats, error) {
 	}
 	return stats, nil
 }
+
+func (s *PostgresStorage) IncrementStatsViews(id string) error {
+	_, err := s.db.Exec("UPDATE stats SET views = views + 1 WHERE id = $1", id)
+	return err
+}

@@ -45,6 +45,10 @@ func (m *mockShortURLStorage) GetPasteByHash(hash string) (*model.Paste, error) 
 	return nil, nil
 }
 
+func (m *mockShortURLStorage) IncrementStatsViews(id string) error {
+	return nil
+}
+
 func (m *mockShortURLStorage) SavePaste(model.Paste) error               { return nil }
 func (m *mockShortURLStorage) GetPasteByID(string) (*model.Paste, error) { return nil, nil }
 func (m *mockShortURLStorage) DeletePaste(string) error                  { return nil }

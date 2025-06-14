@@ -38,6 +38,9 @@ func (m *mockStorage) SaveShortURL(model.ShortURL) error               { return 
 func (m *mockStorage) GetShortURLByID(string) (*model.ShortURL, error) { return nil, nil }
 func (m *mockStorage) DeleteShortURL(string) error                     { return nil }
 func (m *mockStorage) GetAllShortURLs() ([]model.ShortURL, error)      { return nil, nil }
+func (m *mockStorage) IncrementStatsViews(id string) error {
+	return nil
+}
 
 type mockLogger struct{}
 

@@ -51,10 +51,5 @@ func (s *statsService) ListStats(ctx context.Context) ([]model.Stats, error) {
 }
 
 func (s *statsService) IncrementViews(ctx context.Context, id string) error {
-	stat, err := s.storage.GetStatsByID(id)
-	if err != nil {
-		return err
-	}
-	stat.Views++
-	return s.storage.SaveStats(*stat)
+	return s.storage.IncrementStatsViews(id)
 }

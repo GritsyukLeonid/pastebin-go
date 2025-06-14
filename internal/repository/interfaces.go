@@ -29,4 +29,5 @@ type StorageInterface interface {
 	GetStatsByID(string) (*model.Stats, error)
 	DeleteStats(string) error
 	GetAllStats() ([]model.Stats, error)
+	IncrementStatsViews(id string) error
 }
