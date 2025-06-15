@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   model.Paste:
     properties:
@@ -41,8 +42,13 @@ definitions:
       username:
         type: string
     type: object
+host: localhost:8080
 info:
   contact: {}
+  description: API для управления пастами, пользователями, статистикой и короткими
+    URL
+  title: Pastebin API
+  version: "1.0"
 paths:
   /api/paste:
     post:

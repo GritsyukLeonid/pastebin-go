@@ -1,3 +1,8 @@
+// @title Pastebin API
+// @version 1.0
+// @description API для управления пастами, пользователями, статистикой и короткими URL
+// @host localhost:8080
+// @BasePath /
 package main
 
 import (
