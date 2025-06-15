@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Paste"
+                            "$ref": "#/definitions/handlers.CreatePasteRequest"
                         }
                     }
                 ],
@@ -337,7 +337,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Создает новую запись статистики",
+                "description": "Создает новую запись статистики (ID и views генерируются на сервере)",
                 "consumes": [
                     "application/json"
                 ],
@@ -350,12 +350,12 @@ const docTemplate = `{
                 "summary": "Создать статистику",
                 "parameters": [
                     {
-                        "description": "Статистика",
+                        "description": "Пустой объект запроса",
                         "name": "stats",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Stats"
+                            "$ref": "#/definitions/handlers.CreateStatsRequest"
                         }
                     }
                 ],
@@ -401,7 +401,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.User"
+                            "$ref": "#/definitions/handlers.CreateUserRequest"
                         }
                     }
                 ],
@@ -439,7 +439,7 @@ const docTemplate = `{
                 "summary": "Получить пользователя по ID",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "ID пользователя",
                         "name": "id",
                         "in": "path",
@@ -529,6 +529,28 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handlers.CreatePasteRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "expiresAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.CreateStatsRequest": {
+            "type": "object"
+        },
+        "handlers.CreateUserRequest": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Paste": {
             "type": "object",
             "properties": {

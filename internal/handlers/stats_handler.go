@@ -17,6 +17,8 @@ func NewStatsHandler(s service.StatsService) *StatsHandler {
 	return &StatsHandler{service: s}
 }
 
+type CreateStatsRequest struct{}
+
 // GetAllStatsHandler возвращает все записи статистики
 // @Summary Получить все статистики
 // @Description Возвращает список всех статистик
@@ -54,28 +56,29 @@ func (h *StatsHandler) GetStatsByIDHandler(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(stat)
 }
 
-// CreateStatsHandler создает новую статистику
 // @Summary Создать статистику
-// @Description Создает новую запись статистики
+// @Description Создает новую запись статистики (ID и views генерируются на сервере)
 // @Tags stats
 // @Accept json
 // @Produce json
-// @Param stats body model.Stats true "Статистика"
+// @Param stats body handlers.CreateStatsRequest true "Пустой объект запроса"
 // @Success 201 {object} model.Stats
 // @Failure 400 {string} string "Некорректный ввод"
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/stats [post]
 func (h *StatsHandler) CreateStatsHandler(w http.ResponseWriter, r *http.Request) {
-	var s model.Stats
-	if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
+	var req CreateStatsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	created, err := h.service.CreateStats(r.Context(), s)
+
+	created, err := h.service.CreateStats(r.Context(), model.Stats{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(created)
 }

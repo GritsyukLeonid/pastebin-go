@@ -1,5 +1,19 @@
 basePath: /
 definitions:
+  handlers.CreatePasteRequest:
+    properties:
+      content:
+        type: string
+      expiresAt:
+        type: string
+    type: object
+  handlers.CreateStatsRequest:
+    type: object
+  handlers.CreateUserRequest:
+    properties:
+      username:
+        type: string
+    type: object
   model.Paste:
     properties:
       content:
@@ -61,7 +75,7 @@ paths:
         name: paste
         required: true
         schema:
-          $ref: '#/definitions/model.Paste'
+          $ref: '#/definitions/handlers.CreatePasteRequest'
       produces:
       - application/json
       responses:
@@ -265,14 +279,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Создает новую запись статистики
+      description: Создает новую запись статистики (ID и views генерируются на сервере)
       parameters:
-      - description: Статистика
+      - description: Пустой объект запроса
         in: body
         name: stats
         required: true
         schema:
-          $ref: '#/definitions/model.Stats'
+          $ref: '#/definitions/handlers.CreateStatsRequest'
       produces:
       - application/json
       responses:
@@ -302,7 +316,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/model.User'
+          $ref: '#/definitions/handlers.CreateUserRequest'
       produces:
       - application/json
       responses:
@@ -349,7 +363,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:

@@ -17,6 +17,10 @@ func NewUserHandler(s service.UserService) *UserHandler {
 	return &UserHandler{service: s}
 }
 
+type CreateUserRequest struct {
+	Username string `json:"username"`
+}
+
 // GetUsersHandler возвращает всех пользователей
 // @Summary Получить всех пользователей
 // @Description Возвращает список всех пользователей
@@ -40,7 +44,7 @@ func (h *UserHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 // @Description Возвращает пользователя по заданному ID
 // @Tags users
 // @Produce json
-// @Param id path int true "ID пользователя"
+// @Param id path string true "ID пользователя"
 // @Success 200 {object} model.User
 // @Failure 400 {string} string "Некорректный запрос"
 // @Failure 404 {string} string "Пользователь не найден"
@@ -64,13 +68,13 @@ func (h *UserHandler) GetUserByIDHandler(w http.ResponseWriter, r *http.Request)
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param user body model.User true "Данные пользователя"
+// @Param user body handlers.CreateUserRequest true "Данные пользователя"
 // @Success 201 {object} model.User
 // @Failure 400 {string} string "Некорректный запрос"
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/user [post]
 func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	var u model.User
+	var u CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
@@ -79,7 +83,10 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "username required", http.StatusBadRequest)
 		return
 	}
-	created, err := h.service.CreateUser(r.Context(), u)
+	created, err := h.service.CreateUser(r.Context(), model.User{
+		Username: u.Username,
+	})
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

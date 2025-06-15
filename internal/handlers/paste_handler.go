@@ -14,6 +14,11 @@ type PasteHandler struct {
 	service service.PasteService
 }
 
+type CreatePasteRequest struct {
+	Content   string    `json:"content"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
+
 func NewPasteHandler(s service.PasteService) *PasteHandler {
 	return &PasteHandler{service: s}
 }
@@ -24,18 +29,14 @@ func NewPasteHandler(s service.PasteService) *PasteHandler {
 // @Tags pastes
 // @Accept json
 // @Produce json
-// @Param paste body model.Paste true "Paste объект"
+// @Param paste body handlers.CreatePasteRequest true "Paste объект"
 // @Success 201 {object} model.Paste
 // @Failure 400 {string} string "Некорректный JSON"
 // @Failure 500 {string} string "Ошибка на сервере"
 // @Router /api/paste [post]
 func (h *PasteHandler) CreatePasteHandler(w http.ResponseWriter, r *http.Request) {
-	type createRequest struct {
-		Content   string    `json:"content"`
-		ExpiresAt time.Time `json:"expiresAt"`
-	}
 
-	var req createRequest
+	var req CreatePasteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -71,7 +72,7 @@ func (h *PasteHandler) CreatePasteHandler(w http.ResponseWriter, r *http.Request
 // @Description Удаляет paste по ID
 // @Tags pastes
 // @Param id path string true "ID пасты"
-// @Success 204 {string} string "Паста удалена"
+// @Success 204 "Паста удалена"
 // @Failure 404 {string} string "Paste не найден"
 // @Router /api/paste/{id} [delete]
 func (h *PasteHandler) DeletePasteHandler(w http.ResponseWriter, r *http.Request) {
