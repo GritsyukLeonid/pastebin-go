@@ -100,6 +100,7 @@ func main() {
 	api.HandleFunc("/paste", handlers.Paste.CreatePasteHandler).Methods(http.MethodPost)
 	api.HandleFunc("/paste/{id}", handlers.Paste.DeletePasteHandler).Methods(http.MethodDelete)
 	api.HandleFunc("/paste/{id}", handlers.Paste.GetPasteByIDHandler).Methods(http.MethodGet)
+	api.HandleFunc("/paste/hash/{hash}", handlers.Paste.GetPasteByHashHandler).Methods(http.MethodGet)
 
 	api.HandleFunc("/user", handlers.User.GetUsersHandler).Methods(http.MethodGet)
 	api.HandleFunc("/user/{id}", handlers.User.GetUserByIDHandler).Methods(http.MethodGet)
