@@ -86,12 +86,13 @@ func main() {
 
 	shortURLService := service.NewShortURLService(postgresStorage, redisLogger)
 
-	handlers.InitHandlers(
-		service.NewPasteService(postgresStorage, redisLogger, statsService, shortURLService),
-		service.NewUserService(postgresStorage, redisLogger),
-		statsService,
-		service.NewShortURLService(postgresStorage, redisLogger),
-	)
+	pasteService := service.NewPasteService(postgresStorage, redisLogger, statsService, shortURLService)
+	userService := service.NewUserService(postgresStorage, redisLogger)
+
+	handlers.Paste = handlers.NewPasteHandler(pasteService)
+	handlers.User = handlers.NewUserHandler(userService)
+	handlers.Stats = handlers.NewStatsHandler(statsService)
+	handlers.ShortURL = handlers.NewShortURLHandler(shortURLService, pasteService, statsService)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
@@ -129,15 +130,15 @@ func main() {
 	}
 
 	go func() {
-		log.Println("🚀 HTTP server started on :8080")
-		log.Println("📚 Swagger UI: http://localhost:8080/swagger/index.html")
+		log.Println("HTTP server started on :8080")
+		log.Println("Swagger UI: http://localhost:8080/swagger/index.html")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("HTTP server error: %v", err)
 		}
 	}()
 
 	<-stop
-	log.Println("🛑 Shutting down server...")
+	log.Println("Shutting down server...")
 	if err := server.Shutdown(context.Background()); err != nil {
 		log.Fatalf("Ошибка при остановке сервера: %v", err)
 	}

@@ -20,5 +20,5 @@ func InitHandlers(
 	Paste = NewPasteHandler(ps)
 	User = NewUserHandler(us)
 	Stats = NewStatsHandler(ss)
-	ShortURL = NewShortURLHandler(sh, ps)
+	ShortURL = NewShortURLHandler(sh, ps, ss)
 }

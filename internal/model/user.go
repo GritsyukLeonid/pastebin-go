@@ -12,14 +12,6 @@ func NewUser(username string) *User {
 	}
 }
 
-func (u *User) SetID(id int64) {
-	u.ID = id
-}
-
-func (u *User) AddPost(hash string) {
-	u.Posts = append(u.Posts, hash)
-}
-
 func (u *User) GetTypeName() string {
 	return "User"
 }

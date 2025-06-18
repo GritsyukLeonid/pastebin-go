@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -31,7 +32,7 @@ func NewPasteHandler(s service.PasteService) *PasteHandler {
 // @Accept json
 // @Produce json
 // @Param paste body handlers.CreatePasteRequest true "Paste объект"
-// @Success 201 {object} model.Paste
+// @Success 201 {object} handlers.PasteCreateResponse
 // @Failure 400 {string} string "Некорректный JSON"
 // @Failure 500 {string} string "Ошибка на сервере"
 // @Router /api/paste [post]
@@ -72,7 +73,7 @@ func (h *PasteHandler) CreatePasteHandler(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(PasteCreateResponse{
 		Hash:     created.Hash,
-		ShortURL: created.Hash[:6],
+		ShortURL: fmt.Sprintf("http://localhost:8080/s/%s", created.Hash[:6]),
 	})
 
 }

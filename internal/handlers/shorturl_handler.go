@@ -13,12 +13,14 @@ import (
 type ShortURLHandler struct {
 	service      service.ShortURLService
 	pasteService service.PasteService
+	statsService service.StatsService
 }
 
-func NewShortURLHandler(s service.ShortURLService, ps service.PasteService) *ShortURLHandler {
+func NewShortURLHandler(s service.ShortURLService, ps service.PasteService, ss service.StatsService) *ShortURLHandler {
 	return &ShortURLHandler{
 		service:      s,
 		pasteService: ps,
+		statsService: ss, //
 	}
 }
 
@@ -85,8 +87,14 @@ func (h *ShortURLHandler) ResolveShortURLHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
+	_ = h.statsService.IncrementViews(r.Context(), paste.ID)
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(paste)
+	json.NewEncoder(w).Encode(struct {
+		Content string `json:"content"`
+	}{
+		Content: paste.Content,
+	})
 }
 
 // GetShortURLByIDHandler получает короткий URL по ID

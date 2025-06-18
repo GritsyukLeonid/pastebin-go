@@ -11,7 +11,6 @@ type Paste struct {
 	CreatedAt time.Time `json:"createdAt"`
 	ExpiresAt time.Time `json:"expiresAt"`
 	Views     int       `json:"views"`
-	Metrics   *Stats    `json:"metrics"`
 }
 
 func NewPaste(content string, ttl time.Duration) *Paste {
@@ -24,32 +23,8 @@ func NewPaste(content string, ttl time.Duration) *Paste {
 	}
 }
 
-func (p *Paste) SetID(id string) {
-	p.ID = id
-}
-
-func (p *Paste) SetHash(h string) {
-	p.Hash = h
-}
-
-func (p *Paste) SetContent(content string) {
-	p.Content = content
-}
-
-func (p *Paste) SetExpiresAt(t time.Time) {
-	p.ExpiresAt = t
-}
-
 func (p *Paste) IncrementViews() {
 	p.Views++
-}
-
-func (p *Paste) AttachStats(s *Stats) {
-	p.Metrics = s
-}
-
-func (p *Paste) Stats() *Stats {
-	return p.Metrics
 }
 
 func (p *Paste) GetTypeName() string {
