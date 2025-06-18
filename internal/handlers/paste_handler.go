@@ -3,8 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
 	"github.com/GritsyukLeonid/pastebin-go/internal/service"
@@ -63,8 +64,17 @@ func (h *PasteHandler) CreatePasteHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	type PasteCreateResponse struct {
+		Hash     string `json:"hash"`
+		ShortURL string `json:"short_url"`
+	}
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(created)
+	json.NewEncoder(w).Encode(PasteCreateResponse{
+		Hash:     created.Hash,
+		ShortURL: created.Hash[:6],
+	})
+
 }
 
 // DeletePasteHandler удаляет пасту по ID
@@ -76,8 +86,12 @@ func (h *PasteHandler) CreatePasteHandler(w http.ResponseWriter, r *http.Request
 // @Failure 404 {string} string "Paste не найден"
 // @Router /api/paste/{id} [delete]
 func (h *PasteHandler) DeletePasteHandler(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	id := parts[len(parts)-1]
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
 
 	if err := h.service.DeletePaste(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -96,8 +110,12 @@ func (h *PasteHandler) DeletePasteHandler(w http.ResponseWriter, r *http.Request
 // @Failure 404 {string} string "Paste не найден"
 // @Router /api/paste/{id} [get]
 func (h *PasteHandler) GetPasteByIDHandler(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	id := parts[len(parts)-1]
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
 
 	paste, err := h.service.GetPasteByID(r.Context(), id)
 	if err != nil {
@@ -118,7 +136,12 @@ func (h *PasteHandler) GetPasteByIDHandler(w http.ResponseWriter, r *http.Reques
 // @Failure 404 {string} string "Paste не найден"
 // @Router /api/paste/hash/{hash} [get]
 func (h *PasteHandler) GetPasteByHashHandler(w http.ResponseWriter, r *http.Request) {
-	hash := strings.TrimPrefix(r.URL.Path, "/api/paste/hash/")
+	vars := mux.Vars(r)
+	hash, ok := vars["hash"]
+	if !ok {
+		http.Error(w, "missing hash", http.StatusBadRequest)
+		return
+	}
 
 	paste, err := h.service.GetPasteByHash(r.Context(), hash)
 	if err != nil {
@@ -127,5 +150,11 @@ func (h *PasteHandler) GetPasteByHashHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(paste)
+	type PasteContentResponse struct {
+		Content string `json:"content"`
+	}
+
+	json.NewEncoder(w).Encode(PasteContentResponse{
+		Content: paste.Content,
+	})
 }

@@ -106,8 +106,6 @@ paths:
       responses:
         "204":
           description: Паста удалена
-          schema:
-            type: string
         "404":
           description: Paste не найден
           schema:
@@ -160,6 +158,55 @@ paths:
       summary: Получить запись по хэшу
       tags:
       - pastes
+  /api/paste/popular:
+    get:
+      description: Возвращает топ паст по количеству просмотров
+      parameters:
+      - description: Максимальное количество записей (по умолчанию 5)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Stats'
+            type: array
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Получить популярные пасты
+      tags:
+      - stats
+  /api/shorturl/{hash}:
+    post:
+      description: Использует hash пасты как основу для короткой ссылки
+      parameters:
+      - description: Hash пасты
+        in: path
+        name: hash
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.ShortURL'
+        "400":
+          description: Хэш слишком короткий
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервиса
+          schema:
+            type: string
+      summary: Создать короткий URL
+      tags:
+      - shorturls
   /api/shorturl/{id}:
     delete:
       description: Удаляет короткий URL по ID
@@ -401,4 +448,25 @@ paths:
       summary: Получить всех пользователей
       tags:
       - users
+  /s/{code}:
+    get:
+      description: Возвращает пасту, связанную с коротким URL
+      parameters:
+      - description: Короткий код
+        in: path
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Paste'
+        "404":
+          description: ShortURL или паста не найдена
+          schema:
+            type: string
+      summary: Получить пасту по короткой ссылке
+      tags:
+      - shorturls
 swagger: "2.0"

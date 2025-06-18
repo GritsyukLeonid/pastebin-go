@@ -35,11 +35,24 @@ func (m *mockStorage) GetUserByID(string) (*model.User, error)         { return 
 func (m *mockStorage) DeleteUser(string) error                         { return nil }
 func (m *mockStorage) GetAllUsers() ([]model.User, error)              { return nil, nil }
 func (m *mockStorage) SaveShortURL(model.ShortURL) error               { return nil }
-func (m *mockStorage) GetShortURLByID(string) (*model.ShortURL, error) { return nil, nil }
+func (m *mockStorage) GetShortURLByID(string) (*model.ShortURL, error) { return &model.ShortURL{}, nil }
 func (m *mockStorage) DeleteShortURL(string) error                     { return nil }
 func (m *mockStorage) GetAllShortURLs() ([]model.ShortURL, error)      { return nil, nil }
-func (m *mockStorage) IncrementStatsViews(id string) error {
+func (m *mockStorage) IncrementStatsViews(id string) error             { return nil }
+
+type mockShortURLService struct{}
+
+func (m *mockShortURLService) CreateShortURL(ctx context.Context, u model.ShortURL) (model.ShortURL, error) {
+	return u, nil
+}
+func (m *mockShortURLService) GetShortURLByID(ctx context.Context, id string) (model.ShortURL, error) {
+	return model.ShortURL{}, nil
+}
+func (m *mockShortURLService) DeleteShortURL(ctx context.Context, id string) error {
 	return nil
+}
+func (m *mockShortURLService) ListShortURLs(ctx context.Context) ([]model.ShortURL, error) {
+	return nil, nil
 }
 
 type mockLogger struct{}
@@ -64,6 +77,10 @@ func (m *mockStatsService) IncrementViews(ctx context.Context, id string) error 
 	return nil
 }
 
+func (m *mockStatsService) ListTopStats(ctx context.Context, limit int) ([]model.Stats, error) {
+	return nil, nil
+}
+
 func TestCreatePaste(t *testing.T) {
 	mockStorage := &mockStorage{
 		saveFunc: func(p model.Paste) error {
@@ -75,8 +92,9 @@ func TestCreatePaste(t *testing.T) {
 	}
 	mockLogger := &mockLogger{}
 	mockStats := &mockStatsService{}
+	mockShort := &mockShortURLService{}
 
-	svc := NewPasteService(mockStorage, mockLogger, mockStats)
+	svc := NewPasteService(mockStorage, mockLogger, mockStats, mockShort)
 
 	ctx := context.Background()
 	paste := model.Paste{Content: "test content", ExpiresAt: time.Now().Add(1 * time.Hour)}
@@ -100,8 +118,9 @@ func TestGetPasteByHash(t *testing.T) {
 	}
 	mockLogger := &mockLogger{}
 	mockStats := &mockStatsService{}
+	mockShort := &mockShortURLService{}
 
-	svc := NewPasteService(mockStorage, mockLogger, mockStats)
+	svc := NewPasteService(mockStorage, mockLogger, mockStats, mockShort)
 
 	ctx := context.Background()
 	res, err := svc.GetPasteByHash(ctx, "abc")

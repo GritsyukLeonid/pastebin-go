@@ -34,4 +34,5 @@ type StatsService interface {
 	DeleteStats(ctx context.Context, id string) error
 	ListStats(ctx context.Context) ([]model.Stats, error)
 	IncrementViews(ctx context.Context, id string) error
+	ListTopStats(ctx context.Context, limit int) ([]model.Stats, error)
 }

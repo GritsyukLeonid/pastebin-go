@@ -3,7 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
+	"strconv"
+
+	"github.com/gorilla/mux"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
 	"github.com/GritsyukLeonid/pastebin-go/internal/service"
@@ -46,7 +48,12 @@ func (h *StatsHandler) GetAllStatsHandler(w http.ResponseWriter, r *http.Request
 // @Failure 404 {string} string "Статистика не найдена"
 // @Router /api/stat/{id} [get]
 func (h *StatsHandler) GetStatsByIDHandler(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, "/api/stat/")
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
 	stat, err := h.service.GetStatsByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -92,10 +99,44 @@ func (h *StatsHandler) CreateStatsHandler(w http.ResponseWriter, r *http.Request
 // @Failure 404 {string} string "Статистика не найдена"
 // @Router /api/stat/{id} [delete]
 func (h *StatsHandler) DeleteStatsHandler(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, "/api/stat/")
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
 	if err := h.service.DeleteStats(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// GetPopularPastesHandler возвращает N самых популярных записей по количеству просмотров
+// @Summary Получить популярные пасты
+// @Description Возвращает топ паст по количеству просмотров
+// @Tags stats
+// @Produce json
+// @Param limit query int false "Максимальное количество записей (по умолчанию 5)"
+// @Success 200 {array} model.Stats
+// @Failure 500 {string} string "Ошибка сервера"
+// @Router /api/paste/popular [get]
+func (h *StatsHandler) GetPopularPastesHandler(w http.ResponseWriter, r *http.Request) {
+	limit := 5 // значение по умолчанию
+
+	// читаем limit из query-параметра
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil {
+			limit = parsed
+		}
+	}
+
+	stats, err := h.service.ListTopStats(r.Context(), limit)
+	if err != nil {
+		http.Error(w, "Ошибка при получении популярных паст", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
 }

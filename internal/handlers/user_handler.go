@@ -3,7 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
+
+	"github.com/gorilla/mux"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
 	"github.com/GritsyukLeonid/pastebin-go/internal/service"
@@ -50,8 +51,12 @@ func (h *UserHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {string} string "Пользователь не найден"
 // @Router /api/user/{id} [get]
 func (h *UserHandler) GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/user/")
-	id := idStr
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
 
 	user, err := h.service.GetUserByID(r.Context(), id)
 	if err != nil {
@@ -104,8 +109,12 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 // @Failure 404 {string} string "Пользователь не найден"
 // @Router /api/user/{id} [delete]
 func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/user/")
-	id := idStr
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
 
 	if err := h.service.DeleteUser(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)

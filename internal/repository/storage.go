@@ -1,4 +1,4 @@
-package repository
+package repository // ТЕСТОВАЯ РЕАЛИЗАЦИЯ
 
 import (
 	"encoding/json"

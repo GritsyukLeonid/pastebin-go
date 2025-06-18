@@ -84,8 +84,10 @@ func main() {
 
 	statsService := service.NewStatsService(postgresStorage, redisLogger)
 
+	shortURLService := service.NewShortURLService(postgresStorage, redisLogger)
+
 	handlers.InitHandlers(
-		service.NewPasteService(postgresStorage, redisLogger, statsService),
+		service.NewPasteService(postgresStorage, redisLogger, statsService, shortURLService),
 		service.NewUserService(postgresStorage, redisLogger),
 		statsService,
 		service.NewShortURLService(postgresStorage, redisLogger),
@@ -100,6 +102,8 @@ func main() {
 	api.HandleFunc("/paste", handlers.Paste.CreatePasteHandler).Methods(http.MethodPost)
 	api.HandleFunc("/paste/{id}", handlers.Paste.DeletePasteHandler).Methods(http.MethodDelete)
 	api.HandleFunc("/paste/{id}", handlers.Paste.GetPasteByIDHandler).Methods(http.MethodGet)
+	api.HandleFunc("/paste/hash/{hash}", handlers.Paste.GetPasteByHashHandler).Methods(http.MethodGet)
+	api.HandleFunc("/paste/popular", handlers.Stats.GetPopularPastesHandler).Methods(http.MethodGet)
 
 	api.HandleFunc("/user", handlers.User.GetUsersHandler).Methods(http.MethodGet)
 	api.HandleFunc("/user/{id}", handlers.User.GetUserByIDHandler).Methods(http.MethodGet)
@@ -114,6 +118,8 @@ func main() {
 	api.HandleFunc("/shorturls", handlers.ShortURL.GetAllShortURLsHandler).Methods(http.MethodGet)
 	api.HandleFunc("/shorturl/{id}", handlers.ShortURL.GetShortURLByIDHandler).Methods(http.MethodGet)
 	api.HandleFunc("/shorturl/{id}", handlers.ShortURL.DeleteShortURLHandler).Methods(http.MethodDelete)
+	api.HandleFunc("/shorturl/{hash}", handlers.ShortURL.CreateShortURLHandler).Methods(http.MethodPost)
+	router.HandleFunc("/s/{code}", handlers.ShortURL.ResolveShortURLHandler).Methods(http.MethodGet)
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 

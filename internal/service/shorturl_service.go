@@ -2,8 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"time"
+	"errors"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/logging"
 	"github.com/GritsyukLeonid/pastebin-go/internal/model"
@@ -20,13 +19,17 @@ func NewShortURLService(storage repository.StorageInterface, logger logging.Logg
 }
 
 func (s *shortURLService) CreateShortURL(ctx context.Context, u model.ShortURL) (model.ShortURL, error) {
-	u.ID = fmt.Sprintf("%d", time.Now().UnixNano())
+	existing, err := s.storage.GetShortURLByID(u.ID)
+	if err == nil && existing != nil {
+		return model.ShortURL{}, errors.New("такой короткий код уже существует")
+	}
 
-	if err := s.storage.SaveShortURL(u); err != nil {
+	// Сохраняем
+	err = s.storage.SaveShortURL(u)
+	if err != nil {
 		return model.ShortURL{}, err
 	}
 
-	_ = s.logger.LogChange("shorturl", u.ID, "created")
 	return u, nil
 }
 

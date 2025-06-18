@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/GritsyukLeonid/pastebin-go/internal/logging"
@@ -52,4 +53,21 @@ func (s *statsService) ListStats(ctx context.Context) ([]model.Stats, error) {
 
 func (s *statsService) IncrementViews(ctx context.Context, id string) error {
 	return s.storage.IncrementStatsViews(id)
+}
+
+func (s *statsService) ListTopStats(ctx context.Context, limit int) ([]model.Stats, error) {
+	allStats, err := s.storage.GetAllStats()
+	if err != nil {
+		return nil, err
+	}
+
+	// Сортируем по Views (по убыванию)
+	sort.Slice(allStats, func(i, j int) bool {
+		return allStats[i].Views > allStats[j].Views
+	})
+
+	if len(allStats) > limit {
+		return allStats[:limit], nil
+	}
+	return allStats, nil
 }

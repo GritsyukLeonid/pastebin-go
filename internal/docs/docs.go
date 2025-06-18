@@ -96,6 +96,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/paste/popular": {
+            "get": {
+                "description": "Возвращает топ паст по количеству просмотров",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "Получить популярные пасты",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Максимальное количество записей (по умолчанию 5)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Stats"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/paste/{id}": {
             "get": {
                 "description": "Возвращает paste по ID",
@@ -147,13 +184,48 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "Паста удалена",
+                        "description": "Паста удалена"
+                    },
+                    "404": {
+                        "description": "Paste не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shorturl/{hash}": {
+            "post": {
+                "description": "Использует hash пасты как основу для короткой ссылки",
+                "tags": [
+                    "shorturls"
+                ],
+                "summary": "Создать короткий URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Hash пасты",
+                        "name": "hash",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.ShortURL"
+                        }
+                    },
+                    "400": {
+                        "description": "Хэш слишком короткий",
                         "schema": {
                             "type": "string"
                         }
                     },
-                    "404": {
-                        "description": "Paste не найден",
+                    "500": {
+                        "description": "Ошибка сервиса",
                         "schema": {
                             "type": "string"
                         }
@@ -520,6 +592,38 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/s/{code}": {
+            "get": {
+                "description": "Возвращает пасту, связанную с коротким URL",
+                "tags": [
+                    "shorturls"
+                ],
+                "summary": "Получить пасту по короткой ссылке",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Короткий код",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Paste"
+                        }
+                    },
+                    "404": {
+                        "description": "ShortURL или паста не найдена",
                         "schema": {
                             "type": "string"
                         }

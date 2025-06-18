@@ -1,4 +1,4 @@
-package main
+package main // ТЕСТОВАЯ РЕАЛИЗАЦИЯ
 
 import (
 	"log"

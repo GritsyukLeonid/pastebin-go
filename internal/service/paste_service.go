@@ -16,10 +16,16 @@ type pasteService struct {
 	storage      repository.StorageInterface
 	logger       logging.Logger
 	statsService StatsService
+	shortService ShortURLService
 }
 
-func NewPasteService(storage repository.StorageInterface, logger logging.Logger, stats StatsService) PasteService {
-	return &pasteService{storage: storage, logger: logger, statsService: stats}
+func NewPasteService(storage repository.StorageInterface, logger logging.Logger, stats StatsService, short ShortURLService) PasteService {
+	return &pasteService{
+		storage:      storage,
+		logger:       logger,
+		statsService: stats,
+		shortService: short,
+	}
 }
 
 func (s *pasteService) CreatePaste(ctx context.Context, p model.Paste) (model.Paste, error) {
@@ -33,6 +39,13 @@ func (s *pasteService) CreatePaste(ctx context.Context, p model.Paste) (model.Pa
 
 	if err := s.storage.SavePaste(p); err != nil {
 		return model.Paste{}, err
+	}
+
+	if len(p.Hash) >= 6 {
+		_, _ = s.shortService.CreateShortURL(ctx, model.ShortURL{
+			ID:       p.Hash[:6],
+			Original: p.Hash,
+		})
 	}
 
 	if p.ExpiresAt.Before(now) {
