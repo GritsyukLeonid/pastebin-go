@@ -1,4 +1,4 @@
-package main // ТЕСТОВАЯ РЕАЛИЗАЦИЯ
+/*package main // ТЕСТОВАЯ РЕАЛИЗАЦИЯ
 
 import (
 	"log"
@@ -35,3 +35,4 @@ func main() {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
+*/
