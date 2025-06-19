@@ -1,4 +1,4 @@
-package main // ТЕСТОВАЯ РЕАЛИЗАЦИЯ
+/*package main // ТЕСТОВАЯ РЕАЛИЗАЦИЯ
 
 import (
 	"context"
@@ -156,3 +156,4 @@ func main() {
 		log.Fatalf("DeleteStats error: %v", err)
 	}
 }
+*/
