@@ -1,4 +1,4 @@
-package grpcimpl
+/*package grpcimpl
 
 import (
 	"context"
@@ -274,3 +274,4 @@ func (s *Server) DeleteShortURL(ctx context.Context, req *pb.IDRequest) (*pb.Sta
 	}
 	return &pb.Status{Message: "Delete successful"}, nil
 }
+*/
