@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -12,24 +13,28 @@ import (
 )
 
 type StatsHandler struct {
-	service service.StatsService
+	statsService service.StatsService
+	pasteService service.PasteService
 }
 
-func NewStatsHandler(s service.StatsService) *StatsHandler {
-	return &StatsHandler{service: s}
+func NewStatsHandler(statsSvc service.StatsService, pasteSvc service.PasteService) *StatsHandler {
+	return &StatsHandler{
+		statsService: statsSvc,
+		pasteService: pasteSvc,
+	}
 }
 
 type CreateStatsRequest struct{}
 
-// GetAllStatsHandler возвращает все записи статистики
-// @Summary Получить все статистики
-// @Description Возвращает список всех статистик
+// @Summary Получить всю статистику
+// @Description Возвращает список всех записей статистики просмотров
 // @Tags stats
 // @Produce json
 // @Success 200 {array} model.Stats
+// @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/stats [get]
 func (h *StatsHandler) GetAllStatsHandler(w http.ResponseWriter, r *http.Request) {
-	stats, err := h.service.ListStats(r.Context())
+	stats, err := h.statsService.ListStats(r.Context())
 	if err != nil {
 		http.Error(w, "Ошибка при получении статистики", http.StatusInternalServerError)
 		return
@@ -38,13 +43,13 @@ func (h *StatsHandler) GetAllStatsHandler(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(stats)
 }
 
-// GetStatsByIDHandler возвращает статистику по ID
 // @Summary Получить статистику по ID
-// @Description Возвращает статистику по заданному ID
+// @Description Возвращает статистику просмотров для указанного ID пасты
 // @Tags stats
 // @Produce json
-// @Param id path string true "ID статистики"
+// @Param id path string true "ID статистики (равен ID пасты)"
 // @Success 200 {object} model.Stats
+// @Failure 400 {string} string "ID отсутствует"
 // @Failure 404 {string} string "Статистика не найдена"
 // @Router /api/stat/{id} [get]
 func (h *StatsHandler) GetStatsByIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +59,7 @@ func (h *StatsHandler) GetStatsByIDHandler(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return
 	}
-	stat, err := h.service.GetStatsByID(r.Context(), id)
+	stat, err := h.statsService.GetStatsByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -63,14 +68,14 @@ func (h *StatsHandler) GetStatsByIDHandler(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(stat)
 }
 
-// @Summary Создать статистику
-// @Description Создает новую запись статистики (ID и views генерируются на сервере)
+// @Summary Создать новую запись статистики
+// @Description Создаёт пустую запись статистики. Используется редко, т.к. обычно статистика создаётся автоматически.
 // @Tags stats
 // @Accept json
 // @Produce json
 // @Param stats body handlers.CreateStatsRequest true "Пустой объект запроса"
 // @Success 201 {object} model.Stats
-// @Failure 400 {string} string "Некорректный ввод"
+// @Failure 400 {string} string "Некорректный JSON"
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/stats [post]
 func (h *StatsHandler) CreateStatsHandler(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +85,7 @@ func (h *StatsHandler) CreateStatsHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	created, err := h.service.CreateStats(r.Context(), model.Stats{})
+	created, err := h.statsService.CreateStats(r.Context(), model.Stats{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -90,12 +95,12 @@ func (h *StatsHandler) CreateStatsHandler(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(created)
 }
 
-// DeleteStatsHandler удаляет статистику по ID
 // @Summary Удалить статистику
-// @Description Удаляет запись статистики по ID
+// @Description Удаляет статистику просмотров по ID пасты
 // @Tags stats
-// @Param id path string true "ID статистики"
+// @Param id path string true "ID статистики (равен ID пасты)"
 // @Success 204 {string} string "Статистика удалена"
+// @Failure 400 {string} string "ID отсутствует"
 // @Failure 404 {string} string "Статистика не найдена"
 // @Router /api/stat/{id} [delete]
 func (h *StatsHandler) DeleteStatsHandler(w http.ResponseWriter, r *http.Request) {
@@ -105,38 +110,52 @@ func (h *StatsHandler) DeleteStatsHandler(w http.ResponseWriter, r *http.Request
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return
 	}
-	if err := h.service.DeleteStats(r.Context(), id); err != nil {
+	if err := h.statsService.DeleteStats(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// GetPopularPastesHandler возвращает N самых популярных записей по количеству просмотров
 // @Summary Получить популярные пасты
-// @Description Возвращает топ паст по количеству просмотров
+// @Description Возвращает список самых просматриваемых паст (по убыванию просмотров)
 // @Tags stats
 // @Produce json
 // @Param limit query int false "Максимальное количество записей (по умолчанию 5)"
-// @Success 200 {array} model.Stats
-// @Failure 500 {string} string "Ошибка сервера"
+// @Success 200 {array} model.Paste
+// @Failure 500 {string} string "Ошибка при получении статистики"
+// @Failure 404 {string} string "Популярные пасты не найдены"
 // @Router /api/paste/popular [get]
 func (h *StatsHandler) GetPopularPastesHandler(w http.ResponseWriter, r *http.Request) {
-	limit := 5 // значение по умолчанию
-
-	// читаем limit из query-параметра
+	limit := 5
 	if l := r.URL.Query().Get("limit"); l != "" {
 		if parsed, err := strconv.Atoi(l); err == nil {
 			limit = parsed
 		}
 	}
 
-	stats, err := h.service.ListTopStats(r.Context(), limit)
+	stats, err := h.statsService.ListTopStats(r.Context(), limit)
 	if err != nil {
 		http.Error(w, "Ошибка при получении популярных паст", http.StatusInternalServerError)
 		return
 	}
 
+	var popularPastes []model.Paste
+	for _, stat := range stats {
+		paste, err := h.pasteService.GetPasteByID(r.Context(), stat.ID)
+		if err != nil {
+			log.Printf("❌ Не найдена паста с ID %s: %v", stat.ID, err)
+			continue
+		}
+		paste.Views = stat.Views
+		popularPastes = append(popularPastes, paste)
+	}
+
+	if len(popularPastes) == 0 {
+		http.Error(w, "No popular pastes found", http.StatusNotFound)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stats)
+	json.NewEncoder(w).Encode(popularPastes)
 }

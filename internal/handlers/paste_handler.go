@@ -13,7 +13,8 @@ import (
 )
 
 type PasteHandler struct {
-	service service.PasteService
+	service      service.PasteService
+	statsService service.StatsService
 }
 
 type CreatePasteRequest struct {
@@ -21,20 +22,28 @@ type CreatePasteRequest struct {
 	ExpiresAt time.Time `json:"expiresAt"`
 }
 
-func NewPasteHandler(s service.PasteService) *PasteHandler {
-	return &PasteHandler{service: s}
+type PasteCreateResponse struct {
+	ID       string `json:"id"`
+	Hash     string `json:"hash"`
+	ShortURL string `json:"short_url"`
 }
 
-// CreatePasteHandler создаёт новую пасту
-// @Summary Создать новую запись
-// @Description Создает новую запись paste
+func NewPasteHandler(pasteSvc service.PasteService, statsSvc service.StatsService) *PasteHandler {
+	return &PasteHandler{
+		service:      pasteSvc,
+		statsService: statsSvc,
+	}
+}
+
+// @Summary Создать новую пасту
+// @Description Создает новую пасту с указанным содержимым и временем истечения. Возвращает ID, hash и короткий URL.
 // @Tags pastes
 // @Accept json
 // @Produce json
-// @Param paste body handlers.CreatePasteRequest true "Paste объект"
-// @Success 201 {object} handlers.PasteCreateResponse
-// @Failure 400 {string} string "Некорректный JSON"
-// @Failure 500 {string} string "Ошибка на сервере"
+// @Param paste body handlers.CreatePasteRequest true "Данные пасты"
+// @Success 201 {object} PasteCreateResponse
+// @Failure 400 {string} string "Некорректный запрос"
+// @Failure 500 {string} string "Внутренняя ошибка сервера"
 // @Router /api/paste [post]
 func (h *PasteHandler) CreatePasteHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -65,26 +74,22 @@ func (h *PasteHandler) CreatePasteHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	type PasteCreateResponse struct {
-		Hash     string `json:"hash"`
-		ShortURL string `json:"short_url"`
-	}
-
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(PasteCreateResponse{
+		ID:       created.ID,
 		Hash:     created.Hash,
 		ShortURL: fmt.Sprintf("http://localhost:8080/s/%s", created.Hash[:6]),
 	})
 
 }
 
-// DeletePasteHandler удаляет пасту по ID
-// @Summary Удалить запись
-// @Description Удаляет paste по ID
+// @Summary Удалить пасту по ID
+// @Description Удаляет существующую пасту по её уникальному ID
 // @Tags pastes
 // @Param id path string true "ID пасты"
-// @Success 204 "Паста удалена"
-// @Failure 404 {string} string "Paste не найден"
+// @Success 204 {string} string "Паста удалена"
+// @Failure 400 {string} string "Некорректный ID"
+// @Failure 404 {string} string "Паста не найдена"
 // @Router /api/paste/{id} [delete]
 func (h *PasteHandler) DeletePasteHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -101,14 +106,14 @@ func (h *PasteHandler) DeletePasteHandler(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// GetPasteByIDHandler возвращает пасту по ID
-// @Summary Получить запись по ID
-// @Description Возвращает paste по ID
+// @Summary Получить пасту по ID
+// @Description Возвращает полную информацию о пасте по её ID. Также увеличивает счётчик просмотров.
 // @Tags pastes
 // @Produce json
 // @Param id path string true "ID пасты"
 // @Success 200 {object} model.Paste
-// @Failure 404 {string} string "Paste не найден"
+// @Failure 400 {string} string "Некорректный ID"
+// @Failure 404 {string} string "Паста не найдена"
 // @Router /api/paste/{id} [get]
 func (h *PasteHandler) GetPasteByIDHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -123,18 +128,21 @@ func (h *PasteHandler) GetPasteByIDHandler(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "Paste not found", http.StatusNotFound)
 		return
 	}
+
+	_ = h.statsService.IncrementViews(r.Context(), paste.ID)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(paste)
 }
 
-// GetPasteByHashHandler возвращает пасту по хэшу
-// @Summary Получить запись по хэшу
-// @Description Возвращает paste по hash
+// @Summary Получить пасту по hash
+// @Description Возвращает пасту по уникальному hash. Также увеличивает счётчик просмотров.
 // @Tags pastes
 // @Produce json
 // @Param hash path string true "Hash пасты"
 // @Success 200 {object} model.Paste
-// @Failure 404 {string} string "Paste не найден"
+// @Failure 400 {string} string "Некорректный hash"
+// @Failure 404 {string} string "Паста не найдена"
 // @Router /api/paste/hash/{hash} [get]
 func (h *PasteHandler) GetPasteByHashHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -150,12 +158,8 @@ func (h *PasteHandler) GetPasteByHashHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	type PasteContentResponse struct {
-		Content string `json:"content"`
-	}
+	_ = h.statsService.IncrementViews(r.Context(), paste.ID)
 
-	json.NewEncoder(w).Encode(PasteContentResponse{
-		Content: paste.Content,
-	})
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(paste)
 }

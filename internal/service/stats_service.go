@@ -51,8 +51,8 @@ func (s *statsService) ListStats(ctx context.Context) ([]model.Stats, error) {
 	return s.storage.GetAllStats()
 }
 
-func (s *statsService) IncrementViews(ctx context.Context, id string) error {
-	return s.storage.IncrementStatsViews(id)
+func (s *statsService) IncrementViews(ctx context.Context, pasteID string) error {
+	return s.storage.IncrementStatsViews(pasteID)
 }
 
 func (s *statsService) ListTopStats(ctx context.Context, limit int) ([]model.Stats, error) {

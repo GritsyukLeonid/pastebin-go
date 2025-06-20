@@ -83,7 +83,9 @@ func main() {
 
 	pasteID := pasteResp.Id
 
-	pasteByID, err := pasteClient.GetPaste(ctx, &pb.IDRequest{Id: pasteID})
+	pasteByID, err := pasteClient.GetPaste(ctx, &pb.IDRequest{
+		Id: pasteID,
+	})
 	if err != nil {
 		log.Fatalf("GetPaste error: %v", err)
 	}

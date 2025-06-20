@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/api/paste": {
             "post": {
-                "description": "Создает новую запись paste",
+                "description": "Создает новую пасту с указанным содержимым и временем истечения. Возвращает ID, hash и короткий URL.",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,10 +27,10 @@ const docTemplate = `{
                 "tags": [
                     "pastes"
                 ],
-                "summary": "Создать новую запись",
+                "summary": "Создать новую пасту",
                 "parameters": [
                     {
-                        "description": "Paste объект",
+                        "description": "Данные пасты",
                         "name": "paste",
                         "in": "body",
                         "required": true,
@@ -43,17 +43,17 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/model.Paste"
+                            "$ref": "#/definitions/handlers.PasteCreateResponse"
                         }
                     },
                     "400": {
-                        "description": "Некорректный JSON",
+                        "description": "Некорректный запрос",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Ошибка на сервере",
+                        "description": "Внутренняя ошибка сервера",
                         "schema": {
                             "type": "string"
                         }
@@ -63,14 +63,14 @@ const docTemplate = `{
         },
         "/api/paste/hash/{hash}": {
             "get": {
-                "description": "Возвращает paste по hash",
+                "description": "Возвращает пасту по уникальному hash. Также увеличивает счётчик просмотров.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "pastes"
                 ],
-                "summary": "Получить запись по хэшу",
+                "summary": "Получить пасту по hash",
                 "parameters": [
                     {
                         "type": "string",
@@ -87,8 +87,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.Paste"
                         }
                     },
+                    "400": {
+                        "description": "Некорректный hash",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
-                        "description": "Paste не найден",
+                        "description": "Паста не найдена",
                         "schema": {
                             "type": "string"
                         }
@@ -98,7 +104,7 @@ const docTemplate = `{
         },
         "/api/paste/popular": {
             "get": {
-                "description": "Возвращает топ паст по количеству просмотров",
+                "description": "Возвращает список самых просматриваемых паст (по убыванию просмотров)",
                 "produces": [
                     "application/json"
                 ],
@@ -120,12 +126,18 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Stats"
+                                "$ref": "#/definitions/model.Paste"
                             }
                         }
                     },
+                    "404": {
+                        "description": "Популярные пасты не найдены",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
-                        "description": "Ошибка сервера",
+                        "description": "Ошибка при получении статистики",
                         "schema": {
                             "type": "string"
                         }
@@ -135,14 +147,14 @@ const docTemplate = `{
         },
         "/api/paste/{id}": {
             "get": {
-                "description": "Возвращает paste по ID",
+                "description": "Возвращает полную информацию о пасте по её ID. Также увеличивает счётчик просмотров.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "pastes"
                 ],
-                "summary": "Получить запись по ID",
+                "summary": "Получить пасту по ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -159,8 +171,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.Paste"
                         }
                     },
+                    "400": {
+                        "description": "Некорректный ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
-                        "description": "Paste не найден",
+                        "description": "Паста не найдена",
                         "schema": {
                             "type": "string"
                         }
@@ -168,11 +186,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Удаляет paste по ID",
+                "description": "Удаляет существующую пасту по её уникальному ID",
                 "tags": [
                     "pastes"
                 ],
-                "summary": "Удалить запись",
+                "summary": "Удалить пасту по ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -184,10 +202,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "Паста удалена"
+                        "description": "Паста удалена",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ID",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     "404": {
-                        "description": "Paste не найден",
+                        "description": "Паста не найдена",
                         "schema": {
                             "type": "string"
                         }
@@ -197,7 +224,7 @@ const docTemplate = `{
         },
         "/api/shorturl/{hash}": {
             "post": {
-                "description": "Использует hash пасты как основу для короткой ссылки",
+                "description": "Создает короткую ссылку по переданному hash пасты. Используется первые 6 символов хэша.",
                 "tags": [
                     "shorturls"
                 ],
@@ -219,13 +246,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Хэш слишком короткий",
+                        "description": "Хэш слишком короткий или отсутствует",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Ошибка сервиса",
+                        "description": "Ошибка сервера",
                         "schema": {
                             "type": "string"
                         }
@@ -235,14 +262,14 @@ const docTemplate = `{
         },
         "/api/shorturl/{id}": {
             "get": {
-                "description": "Возвращает короткий URL по ID",
+                "description": "Возвращает объект короткой ссылки по её ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "shorturls"
                 ],
-                "summary": "Получить короткий URL",
+                "summary": "Получить короткий URL по ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -259,6 +286,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.ShortURL"
                         }
                     },
+                    "400": {
+                        "description": "ID отсутствует",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "ShortURL не найден",
                         "schema": {
@@ -268,7 +301,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Удаляет короткий URL по ID",
+                "description": "Удаляет короткий URL по его ID",
                 "tags": [
                     "shorturls"
                 ],
@@ -289,6 +322,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "400": {
+                        "description": "ID отсутствует",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "ShortURL не найден",
                         "schema": {
@@ -300,7 +339,7 @@ const docTemplate = `{
         },
         "/api/shorturls": {
             "get": {
-                "description": "Возвращает список всех коротких URL",
+                "description": "Возвращает список всех коротких ссылок",
                 "produces": [
                     "application/json"
                 ],
@@ -317,13 +356,19 @@ const docTemplate = `{
                                 "$ref": "#/definitions/model.ShortURL"
                             }
                         }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении данных",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
         },
         "/api/stat/{id}": {
             "get": {
-                "description": "Возвращает статистику по заданному ID",
+                "description": "Возвращает статистику просмотров для указанного ID пасты",
                 "produces": [
                     "application/json"
                 ],
@@ -334,7 +379,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID статистики",
+                        "description": "ID статистики (равен ID пасты)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -347,6 +392,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.Stats"
                         }
                     },
+                    "400": {
+                        "description": "ID отсутствует",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "Статистика не найдена",
                         "schema": {
@@ -356,7 +407,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Удаляет запись статистики по ID",
+                "description": "Удаляет статистику просмотров по ID пасты",
                 "tags": [
                     "stats"
                 ],
@@ -364,7 +415,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID статистики",
+                        "description": "ID статистики (равен ID пасты)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -373,6 +424,12 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "Статистика удалена",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "ID отсутствует",
                         "schema": {
                             "type": "string"
                         }
@@ -388,14 +445,14 @@ const docTemplate = `{
         },
         "/api/stats": {
             "get": {
-                "description": "Возвращает список всех статистик",
+                "description": "Возвращает список всех записей статистики просмотров",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "stats"
                 ],
-                "summary": "Получить все статистики",
+                "summary": "Получить всю статистику",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -405,11 +462,17 @@ const docTemplate = `{
                                 "$ref": "#/definitions/model.Stats"
                             }
                         }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             },
             "post": {
-                "description": "Создает новую запись статистики (ID и views генерируются на сервере)",
+                "description": "Создаёт пустую запись статистики. Используется редко, т.к. обычно статистика создаётся автоматически.",
                 "consumes": [
                     "application/json"
                 ],
@@ -419,7 +482,7 @@ const docTemplate = `{
                 "tags": [
                     "stats"
                 ],
-                "summary": "Создать статистику",
+                "summary": "Создать новую запись статистики",
                 "parameters": [
                     {
                         "description": "Пустой объект запроса",
@@ -439,7 +502,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректный ввод",
+                        "description": "Некорректный JSON",
                         "schema": {
                             "type": "string"
                         }
@@ -455,7 +518,7 @@ const docTemplate = `{
         },
         "/api/user": {
             "post": {
-                "description": "Создает нового пользователя",
+                "description": "Регистрирует нового пользователя с указанным именем",
                 "consumes": [
                     "application/json"
                 ],
@@ -468,7 +531,7 @@ const docTemplate = `{
                 "summary": "Создать нового пользователя",
                 "parameters": [
                     {
-                        "description": "Данные пользователя",
+                        "description": "Тело запроса с данными пользователя",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -485,13 +548,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректный запрос",
+                        "description": "Некорректный JSON или пустое имя",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Ошибка сервера",
+                        "description": "Ошибка сервера при создании",
                         "schema": {
                             "type": "string"
                         }
@@ -501,7 +564,7 @@ const docTemplate = `{
         },
         "/api/user/{id}": {
             "get": {
-                "description": "Возвращает пользователя по заданному ID",
+                "description": "Возвращает пользователя по его уникальному ID",
                 "produces": [
                     "application/json"
                 ],
@@ -512,7 +575,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID пользователя",
+                        "description": "Уникальный ID пользователя",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -526,7 +589,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректный запрос",
+                        "description": "Некорректный запрос (отсутствует ID)",
                         "schema": {
                             "type": "string"
                         }
@@ -540,14 +603,14 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Удаляет пользователя по ID",
+                "description": "Удаляет пользователя по его ID",
                 "tags": [
                     "users"
                 ],
                 "summary": "Удалить пользователя",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "ID пользователя",
                         "name": "id",
                         "in": "path",
@@ -556,7 +619,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "Пользователь удален",
+                        "description": "Пользователь успешно удалён",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос (отсутствует ID)",
                         "schema": {
                             "type": "string"
                         }
@@ -572,7 +641,7 @@ const docTemplate = `{
         },
         "/api/users": {
             "get": {
-                "description": "Возвращает список всех пользователей",
+                "description": "Возвращает список всех зарегистрированных пользователей",
                 "produces": [
                     "application/json"
                 ],
@@ -591,7 +660,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Ошибка сервера",
+                        "description": "Ошибка сервера при получении пользователей",
                         "schema": {
                             "type": "string"
                         }
@@ -601,7 +670,10 @@ const docTemplate = `{
         },
         "/s/{code}": {
             "get": {
-                "description": "Возвращает пасту, связанную с коротким URL",
+                "description": "Возвращает содержимое пасты по короткому коду (короткому URL). Также увеличивает счётчик просмотров.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "shorturls"
                 ],
@@ -617,9 +689,15 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Контент пасты",
                         "schema": {
-                            "$ref": "#/definitions/model.Paste"
+                            "$ref": "#/definitions/handlers.ContentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Код отсутствует",
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     "404": {
@@ -633,6 +711,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handlers.ContentResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.CreatePasteRequest": {
             "type": "object",
             "properties": {
@@ -655,6 +741,20 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.PasteCreateResponse": {
+            "type": "object",
+            "properties": {
+                "hash": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "short_url": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Paste": {
             "type": "object",
             "properties": {
@@ -672,9 +772,6 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
-                },
-                "metrics": {
-                    "$ref": "#/definitions/model.Stats"
                 },
                 "views": {
                     "type": "integer"

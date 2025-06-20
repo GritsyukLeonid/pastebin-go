@@ -17,8 +17,8 @@ func InitHandlers(
 	ss service.StatsService,
 	sh service.ShortURLService,
 ) {
-	Paste = NewPasteHandler(ps)
+	Paste = NewPasteHandler(ps, ss)
 	User = NewUserHandler(us)
-	Stats = NewStatsHandler(ss)
+	Stats = NewStatsHandler(ss, ps)
 	ShortURL = NewShortURLHandler(sh, ps, ss)
 }

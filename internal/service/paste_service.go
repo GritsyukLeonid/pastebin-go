@@ -70,7 +70,7 @@ func (s *pasteService) GetPasteByHash(ctx context.Context, hash string) (model.P
 		return model.Paste{}, err
 	}
 
-	_ = s.statsService.IncrementViews(ctx, hash)
+	_ = s.statsService.IncrementViews(ctx, paste.ID)
 	return *paste, nil
 }
 

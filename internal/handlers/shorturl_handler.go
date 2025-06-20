@@ -16,6 +16,10 @@ type ShortURLHandler struct {
 	statsService service.StatsService
 }
 
+type ContentResponse struct {
+	Content string `json:"content"`
+}
+
 func NewShortURLHandler(s service.ShortURLService, ps service.PasteService, ss service.StatsService) *ShortURLHandler {
 	return &ShortURLHandler{
 		service:      s,
@@ -24,14 +28,13 @@ func NewShortURLHandler(s service.ShortURLService, ps service.PasteService, ss s
 	}
 }
 
-// CreateShortURLHandler создаёт короткий URL, используя укороченный hash
 // @Summary Создать короткий URL
-// @Description Использует hash пасты как основу для короткой ссылки
+// @Description Создает короткую ссылку по переданному hash пасты. Используется первые 6 символов хэша.
 // @Tags shorturls
 // @Param hash path string true "Hash пасты"
 // @Success 201 {object} model.ShortURL
-// @Failure 400 {string} string "Хэш слишком короткий"
-// @Failure 500 {string} string "Ошибка сервиса"
+// @Failure 400 {string} string "Хэш слишком короткий или отсутствует"
+// @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/shorturl/{hash} [post]
 func (h *ShortURLHandler) CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -59,12 +62,13 @@ func (h *ShortURLHandler) CreateShortURLHandler(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(created)
 }
 
-// ResolveShortURLHandler возвращает пасту по короткому коду
 // @Summary Получить пасту по короткой ссылке
-// @Description Возвращает пасту, связанную с коротким URL
+// @Description Возвращает содержимое пасты по короткому коду (короткому URL). Также увеличивает счётчик просмотров.
 // @Tags shorturls
+// @Produce json
 // @Param code path string true "Короткий код"
-// @Success 200 {object} model.Paste
+// @Success 200 {object} handlers.ContentResponse "Контент пасты"
+// @Failure 400 {string} string "Код отсутствует"
 // @Failure 404 {string} string "ShortURL или паста не найдена"
 // @Router /s/{code} [get]
 func (h *ShortURLHandler) ResolveShortURLHandler(w http.ResponseWriter, r *http.Request) {
@@ -97,13 +101,13 @@ func (h *ShortURLHandler) ResolveShortURLHandler(w http.ResponseWriter, r *http.
 	})
 }
 
-// GetShortURLByIDHandler получает короткий URL по ID
-// @Summary Получить короткий URL
-// @Description Возвращает короткий URL по ID
+// @Summary Получить короткий URL по ID
+// @Description Возвращает объект короткой ссылки по её ID
 // @Tags shorturls
 // @Produce json
 // @Param id path string true "ID ShortURL"
 // @Success 200 {object} model.ShortURL
+// @Failure 400 {string} string "ID отсутствует"
 // @Failure 404 {string} string "ShortURL не найден"
 // @Router /api/shorturl/{id} [get]
 func (h *ShortURLHandler) GetShortURLByIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -123,12 +127,12 @@ func (h *ShortURLHandler) GetShortURLByIDHandler(w http.ResponseWriter, r *http.
 	json.NewEncoder(w).Encode(url)
 }
 
-// DeleteShortURLHandler удаляет короткий URL по ID
 // @Summary Удалить короткий URL
-// @Description Удаляет короткий URL по ID
+// @Description Удаляет короткий URL по его ID
 // @Tags shorturls
 // @Param id path string true "ID ShortURL"
 // @Success 200 {string} string "ShortURL удалён"
+// @Failure 400 {string} string "ID отсутствует"
 // @Failure 404 {string} string "ShortURL не найден"
 // @Router /api/shorturl/{id} [delete]
 func (h *ShortURLHandler) DeleteShortURLHandler(w http.ResponseWriter, r *http.Request) {
@@ -146,12 +150,12 @@ func (h *ShortURLHandler) DeleteShortURLHandler(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusOK)
 }
 
-// GetAllShortURLsHandler возвращает все короткие URL
 // @Summary Получить все короткие URL
-// @Description Возвращает список всех коротких URL
+// @Description Возвращает список всех коротких ссылок
 // @Tags shorturls
 // @Produce json
 // @Success 200 {array} model.ShortURL
+// @Failure 500 {string} string "Ошибка при получении данных"
 // @Router /api/shorturls [get]
 func (h *ShortURLHandler) GetAllShortURLsHandler(w http.ResponseWriter, r *http.Request) {
 	urls, err := h.service.ListShortURLs(r.Context())

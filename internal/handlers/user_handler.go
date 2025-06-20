@@ -22,13 +22,12 @@ type CreateUserRequest struct {
 	Username string `json:"username"`
 }
 
-// GetUsersHandler возвращает всех пользователей
 // @Summary Получить всех пользователей
-// @Description Возвращает список всех пользователей
+// @Description Возвращает список всех зарегистрированных пользователей
 // @Tags users
 // @Produce json
 // @Success 200 {array} model.User
-// @Failure 500 {string} string "Ошибка сервера"
+// @Failure 500 {string} string "Ошибка сервера при получении пользователей"
 // @Router /api/users [get]
 func (h *UserHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	users, err := h.service.ListUsers(r.Context())
@@ -40,14 +39,13 @@ func (h *UserHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users)
 }
 
-// GetUserByIDHandler возвращает пользователя по ID
 // @Summary Получить пользователя по ID
-// @Description Возвращает пользователя по заданному ID
+// @Description Возвращает пользователя по его уникальному ID
 // @Tags users
 // @Produce json
-// @Param id path string true "ID пользователя"
+// @Param id path string true "Уникальный ID пользователя"
 // @Success 200 {object} model.User
-// @Failure 400 {string} string "Некорректный запрос"
+// @Failure 400 {string} string "Некорректный запрос (отсутствует ID)"
 // @Failure 404 {string} string "Пользователь не найден"
 // @Router /api/user/{id} [get]
 func (h *UserHandler) GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -67,16 +65,15 @@ func (h *UserHandler) GetUserByIDHandler(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(user)
 }
 
-// CreateUserHandler создает нового пользователя
 // @Summary Создать нового пользователя
-// @Description Создает нового пользователя
+// @Description Регистрирует нового пользователя с указанным именем
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param user body handlers.CreateUserRequest true "Данные пользователя"
+// @Param user body handlers.CreateUserRequest true "Тело запроса с данными пользователя"
 // @Success 201 {object} model.User
-// @Failure 400 {string} string "Некорректный запрос"
-// @Failure 500 {string} string "Ошибка сервера"
+// @Failure 400 {string} string "Некорректный JSON или пустое имя"
+// @Failure 500 {string} string "Ошибка сервера при создании"
 // @Router /api/user [post]
 func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var u CreateUserRequest
@@ -100,12 +97,12 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(created)
 }
 
-// DeleteUserHandler удаляет пользователя по ID
 // @Summary Удалить пользователя
-// @Description Удаляет пользователя по ID
+// @Description Удаляет пользователя по его ID
 // @Tags users
-// @Param id path int true "ID пользователя"
-// @Success 204 {string} string "Пользователь удален"
+// @Param id path string true "ID пользователя"
+// @Success 204 {string} string "Пользователь успешно удалён"
+// @Failure 400 {string} string "Некорректный запрос (отсутствует ID)"
 // @Failure 404 {string} string "Пользователь не найден"
 // @Router /api/user/{id} [delete]
 func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {

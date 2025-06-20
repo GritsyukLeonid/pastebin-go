@@ -211,6 +211,12 @@ func (s *PostgresStorage) GetAllStats() ([]model.Stats, error) {
 }
 
 func (s *PostgresStorage) IncrementStatsViews(id string) error {
-	_, err := s.db.Exec("UPDATE stats SET views = views + 1 WHERE id = $1", id)
+	query := `
+		INSERT INTO stats (id, views)
+		VALUES ($1, 1)
+		ON CONFLICT (id) DO UPDATE
+		SET views = stats.views + 1;
+	`
+	_, err := s.db.ExecContext(context.Background(), query, id)
 	return err
 }

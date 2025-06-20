@@ -1,5 +1,10 @@
 basePath: /
 definitions:
+  handlers.ContentResponse:
+    properties:
+      content:
+        type: string
+    type: object
   handlers.CreatePasteRequest:
     properties:
       content:
@@ -14,6 +19,15 @@ definitions:
       username:
         type: string
     type: object
+  handlers.PasteCreateResponse:
+    properties:
+      hash:
+        type: string
+      id:
+        type: string
+      short_url:
+        type: string
+    type: object
   model.Paste:
     properties:
       content:
@@ -26,8 +40,6 @@ definitions:
         type: string
       id:
         type: string
-      metrics:
-        $ref: '#/definitions/model.Stats'
       views:
         type: integer
     type: object
@@ -68,9 +80,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Создает новую запись paste
+      description: Создает новую пасту с указанным содержимым и временем истечения.
+        Возвращает ID, hash и короткий URL.
       parameters:
-      - description: Paste объект
+      - description: Данные пасты
         in: body
         name: paste
         required: true
@@ -82,21 +95,21 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/model.Paste'
+            $ref: '#/definitions/handlers.PasteCreateResponse'
         "400":
-          description: Некорректный JSON
+          description: Некорректный запрос
           schema:
             type: string
         "500":
-          description: Ошибка на сервере
+          description: Внутренняя ошибка сервера
           schema:
             type: string
-      summary: Создать новую запись
+      summary: Создать новую пасту
       tags:
       - pastes
   /api/paste/{id}:
     delete:
-      description: Удаляет paste по ID
+      description: Удаляет существующую пасту по её уникальному ID
       parameters:
       - description: ID пасты
         in: path
@@ -106,15 +119,22 @@ paths:
       responses:
         "204":
           description: Паста удалена
-        "404":
-          description: Paste не найден
           schema:
             type: string
-      summary: Удалить запись
+        "400":
+          description: Некорректный ID
+          schema:
+            type: string
+        "404":
+          description: Паста не найдена
+          schema:
+            type: string
+      summary: Удалить пасту по ID
       tags:
       - pastes
     get:
-      description: Возвращает paste по ID
+      description: Возвращает полную информацию о пасте по её ID. Также увеличивает
+        счётчик просмотров.
       parameters:
       - description: ID пасты
         in: path
@@ -128,16 +148,21 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.Paste'
-        "404":
-          description: Paste не найден
+        "400":
+          description: Некорректный ID
           schema:
             type: string
-      summary: Получить запись по ID
+        "404":
+          description: Паста не найдена
+          schema:
+            type: string
+      summary: Получить пасту по ID
       tags:
       - pastes
   /api/paste/hash/{hash}:
     get:
-      description: Возвращает paste по hash
+      description: Возвращает пасту по уникальному hash. Также увеличивает счётчик
+        просмотров.
       parameters:
       - description: Hash пасты
         in: path
@@ -151,21 +176,195 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.Paste'
-        "404":
-          description: Paste не найден
+        "400":
+          description: Некорректный hash
           schema:
             type: string
-      summary: Получить запись по хэшу
+        "404":
+          description: Паста не найдена
+          schema:
+            type: string
+      summary: Получить пасту по hash
       tags:
       - pastes
   /api/paste/popular:
     get:
-      description: Возвращает топ паст по количеству просмотров
+      description: Возвращает список самых просматриваемых паст (по убыванию просмотров)
       parameters:
       - description: Максимальное количество записей (по умолчанию 5)
         in: query
         name: limit
         type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Paste'
+            type: array
+        "404":
+          description: Популярные пасты не найдены
+          schema:
+            type: string
+        "500":
+          description: Ошибка при получении статистики
+          schema:
+            type: string
+      summary: Получить популярные пасты
+      tags:
+      - stats
+  /api/shorturl/{hash}:
+    post:
+      description: Создает короткую ссылку по переданному hash пасты. Используется
+        первые 6 символов хэша.
+      parameters:
+      - description: Hash пасты
+        in: path
+        name: hash
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.ShortURL'
+        "400":
+          description: Хэш слишком короткий или отсутствует
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Создать короткий URL
+      tags:
+      - shorturls
+  /api/shorturl/{id}:
+    delete:
+      description: Удаляет короткий URL по его ID
+      parameters:
+      - description: ID ShortURL
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ShortURL удалён
+          schema:
+            type: string
+        "400":
+          description: ID отсутствует
+          schema:
+            type: string
+        "404":
+          description: ShortURL не найден
+          schema:
+            type: string
+      summary: Удалить короткий URL
+      tags:
+      - shorturls
+    get:
+      description: Возвращает объект короткой ссылки по её ID
+      parameters:
+      - description: ID ShortURL
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ShortURL'
+        "400":
+          description: ID отсутствует
+          schema:
+            type: string
+        "404":
+          description: ShortURL не найден
+          schema:
+            type: string
+      summary: Получить короткий URL по ID
+      tags:
+      - shorturls
+  /api/shorturls:
+    get:
+      description: Возвращает список всех коротких ссылок
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ShortURL'
+            type: array
+        "500":
+          description: Ошибка при получении данных
+          schema:
+            type: string
+      summary: Получить все короткие URL
+      tags:
+      - shorturls
+  /api/stat/{id}:
+    delete:
+      description: Удаляет статистику просмотров по ID пасты
+      parameters:
+      - description: ID статистики (равен ID пасты)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Статистика удалена
+          schema:
+            type: string
+        "400":
+          description: ID отсутствует
+          schema:
+            type: string
+        "404":
+          description: Статистика не найдена
+          schema:
+            type: string
+      summary: Удалить статистику
+      tags:
+      - stats
+    get:
+      description: Возвращает статистику просмотров для указанного ID пасты
+      parameters:
+      - description: ID статистики (равен ID пасты)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Stats'
+        "400":
+          description: ID отсутствует
+          schema:
+            type: string
+        "404":
+          description: Статистика не найдена
+          schema:
+            type: string
+      summary: Получить статистику по ID
+      tags:
+      - stats
+  /api/stats:
+    get:
+      description: Возвращает список всех записей статистики просмотров
       produces:
       - application/json
       responses:
@@ -179,154 +378,14 @@ paths:
           description: Ошибка сервера
           schema:
             type: string
-      summary: Получить популярные пасты
-      tags:
-      - stats
-  /api/shorturl/{hash}:
-    post:
-      description: Использует hash пасты как основу для короткой ссылки
-      parameters:
-      - description: Hash пасты
-        in: path
-        name: hash
-        required: true
-        type: string
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/model.ShortURL'
-        "400":
-          description: Хэш слишком короткий
-          schema:
-            type: string
-        "500":
-          description: Ошибка сервиса
-          schema:
-            type: string
-      summary: Создать короткий URL
-      tags:
-      - shorturls
-  /api/shorturl/{id}:
-    delete:
-      description: Удаляет короткий URL по ID
-      parameters:
-      - description: ID ShortURL
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ShortURL удалён
-          schema:
-            type: string
-        "404":
-          description: ShortURL не найден
-          schema:
-            type: string
-      summary: Удалить короткий URL
-      tags:
-      - shorturls
-    get:
-      description: Возвращает короткий URL по ID
-      parameters:
-      - description: ID ShortURL
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.ShortURL'
-        "404":
-          description: ShortURL не найден
-          schema:
-            type: string
-      summary: Получить короткий URL
-      tags:
-      - shorturls
-  /api/shorturls:
-    get:
-      description: Возвращает список всех коротких URL
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.ShortURL'
-            type: array
-      summary: Получить все короткие URL
-      tags:
-      - shorturls
-  /api/stat/{id}:
-    delete:
-      description: Удаляет запись статистики по ID
-      parameters:
-      - description: ID статистики
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: Статистика удалена
-          schema:
-            type: string
-        "404":
-          description: Статистика не найдена
-          schema:
-            type: string
-      summary: Удалить статистику
-      tags:
-      - stats
-    get:
-      description: Возвращает статистику по заданному ID
-      parameters:
-      - description: ID статистики
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Stats'
-        "404":
-          description: Статистика не найдена
-          schema:
-            type: string
-      summary: Получить статистику по ID
-      tags:
-      - stats
-  /api/stats:
-    get:
-      description: Возвращает список всех статистик
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.Stats'
-            type: array
-      summary: Получить все статистики
+      summary: Получить всю статистику
       tags:
       - stats
     post:
       consumes:
       - application/json
-      description: Создает новую запись статистики (ID и views генерируются на сервере)
+      description: Создаёт пустую запись статистики. Используется редко, т.к. обычно
+        статистика создаётся автоматически.
       parameters:
       - description: Пустой объект запроса
         in: body
@@ -342,23 +401,23 @@ paths:
           schema:
             $ref: '#/definitions/model.Stats'
         "400":
-          description: Некорректный ввод
+          description: Некорректный JSON
           schema:
             type: string
         "500":
           description: Ошибка сервера
           schema:
             type: string
-      summary: Создать статистику
+      summary: Создать новую запись статистики
       tags:
       - stats
   /api/user:
     post:
       consumes:
       - application/json
-      description: Создает нового пользователя
+      description: Регистрирует нового пользователя с указанным именем
       parameters:
-      - description: Данные пользователя
+      - description: Тело запроса с данными пользователя
         in: body
         name: user
         required: true
@@ -372,11 +431,11 @@ paths:
           schema:
             $ref: '#/definitions/model.User'
         "400":
-          description: Некорректный запрос
+          description: Некорректный JSON или пустое имя
           schema:
             type: string
         "500":
-          description: Ошибка сервера
+          description: Ошибка сервера при создании
           schema:
             type: string
       summary: Создать нового пользователя
@@ -384,16 +443,20 @@ paths:
       - users
   /api/user/{id}:
     delete:
-      description: Удаляет пользователя по ID
+      description: Удаляет пользователя по его ID
       parameters:
       - description: ID пользователя
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         "204":
-          description: Пользователь удален
+          description: Пользователь успешно удалён
+          schema:
+            type: string
+        "400":
+          description: Некорректный запрос (отсутствует ID)
           schema:
             type: string
         "404":
@@ -404,9 +467,9 @@ paths:
       tags:
       - users
     get:
-      description: Возвращает пользователя по заданному ID
+      description: Возвращает пользователя по его уникальному ID
       parameters:
-      - description: ID пользователя
+      - description: Уникальный ID пользователя
         in: path
         name: id
         required: true
@@ -419,7 +482,7 @@ paths:
           schema:
             $ref: '#/definitions/model.User'
         "400":
-          description: Некорректный запрос
+          description: Некорректный запрос (отсутствует ID)
           schema:
             type: string
         "404":
@@ -431,7 +494,7 @@ paths:
       - users
   /api/users:
     get:
-      description: Возвращает список всех пользователей
+      description: Возвращает список всех зарегистрированных пользователей
       produces:
       - application/json
       responses:
@@ -442,7 +505,7 @@ paths:
               $ref: '#/definitions/model.User'
             type: array
         "500":
-          description: Ошибка сервера
+          description: Ошибка сервера при получении пользователей
           schema:
             type: string
       summary: Получить всех пользователей
@@ -450,18 +513,25 @@ paths:
       - users
   /s/{code}:
     get:
-      description: Возвращает пасту, связанную с коротким URL
+      description: Возвращает содержимое пасты по короткому коду (короткому URL).
+        Также увеличивает счётчик просмотров.
       parameters:
       - description: Короткий код
         in: path
         name: code
         required: true
         type: string
+      produces:
+      - application/json
       responses:
         "200":
-          description: OK
+          description: Контент пасты
           schema:
-            $ref: '#/definitions/model.Paste'
+            $ref: '#/definitions/handlers.ContentResponse'
+        "400":
+          description: Код отсутствует
+          schema:
+            type: string
         "404":
           description: ShortURL или паста не найдена
           schema:
